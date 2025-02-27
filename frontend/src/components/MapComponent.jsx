@@ -33,7 +33,7 @@ export default  function MapComponent () {
               style={{ width: "1300px", height: "50vh" }}
               defaultCenter={userLocation}
               defaultZoom={13}
-              mapId='ed2f974b7313b429'
+              mapId={import.meta.env.VITE_GOOGLE_MAPS_MAP_ID}
             >
                 <AdvancedMarker
                     position={userLocation}
