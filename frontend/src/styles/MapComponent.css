@@ -1,0 +1,40 @@
+.map-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 70vh;
+    padding: var(--spacing-4);
+    background-color: goldenrod;
+    
+}
+
+.map {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-md);
+    background-color: #d51414; /* Placeholder color for the map */
+    border: 1px solid #ddd;
+    box-shadow: var(--shadow-lg);
+
+    align-items: center;
+    justify-content: center;
+}
+
+.map-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .map-header h1 {
+    color: var(--color-emerald-dark);
+    margin-bottom: var(--spacing-1);
+  }
+  
+  .subtitle {
+    color: var(--color-gray-600);
+    font-size: var(--text-body-large);
+  }
