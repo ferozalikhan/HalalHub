@@ -23,6 +23,15 @@
     padding: 0 var(--spacing-4);
   }
   
+ .menu-btn{
+    width: 30px;
+    height: 30px;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+   
+  }
+
   .navbar-brand {
     display: flex;
     align-items: center;

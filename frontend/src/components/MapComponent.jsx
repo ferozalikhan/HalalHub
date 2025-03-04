@@ -30,7 +30,7 @@ export default  function MapComponent () {
         <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
           {userLocation ? ( // Render the map only after getting location
             <Map
-              style={{ width: "1300px", height: "50vh" }}
+              style={{ width: "100%", height: "50vh" }}
               defaultCenter={userLocation}
               defaultZoom={13}
               mapId={import.meta.env.VITE_GOOGLE_MAPS_MAP_ID}
