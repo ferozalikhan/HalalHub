@@ -1,10 +1,16 @@
 import { Search, MapPin } from 'lucide-react';
 import '../styles/Navbar.css';
 
-export default function Navbar() {
+export default function Navbar(
+  { toggleSidebarHandler }
+) {
   return (
     <nav className="navbar">
       <div className="navbar-container">
+        {/* Hamburger menu button */}
+      <button className="menu-btn" onClick={toggleSidebarHandler}>
+        ☰
+      </button>
         {/* Brand/Logo */}
         <a href="/" className="navbar-brand">
           <h1 className="navbar-logo">Halal Hub</h1>
