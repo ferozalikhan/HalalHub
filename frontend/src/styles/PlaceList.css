@@ -1,0 +1,138 @@
+.featured-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: var(--spacing-6);
+    width: 100%;
+  }
+  
+  .featured-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .featured-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .card-img {
+    height: 200px;
+    background-color: var(--color-sand-light);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .placeholder {
+    background: linear-gradient(135deg, var(--color-emerald-light), var(--color-sand-light));
+  }
+  
+  .card-content {
+    padding: var(--spacing-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+  
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
+    color: var(--color-gray-600);
+    margin-bottom: var(--spacing-2);
+    font-size: var(--text-caption);
+  }
+  
+  .stars {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+  }
+  
+  .card-description {
+    color: var(--color-gray-600);
+    margin-bottom: var(--spacing-2);
+    font-size: var(--text-body);
+    line-height: 1.5;
+  }
+  
+  .view-details {
+    align-self: flex-end;
+    margin-top: var(--spacing-2);
+  }
+
+
+  /* Media Queries */
+@media (min-width: 768px) {
+    .featured-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+  }
+  
+  @media (min-width: 1024px) {
+    .featured-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+  }
+  
+  /* Mobile adjustments for sidebar */
+  @media (max-width: 768px) {
+
+    .featured-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  /* Dark Mode Adjustments */
+  @media (prefers-color-scheme: dark) {
+    
+    
+    .card {
+      background-color: var(--color-bg-secondary);
+    }
+    
+    .placeholder {
+      background: linear-gradient(135deg, #1A402D, #2D3034);
+    }
+    
+    .subtitle,
+    .card-description {
+      color: var(--color-gray-400);
+    }
+  }
+  
+  /* Animations - updated for left slide */
+  @keyframes slide-in {
+    from {
+      opacity: 0;
+      transform: translateX(-100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  .featured-card {
+    animation: fade-in 0.5s ease-out forwards;
+  }
+  
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
