@@ -1,13 +1,45 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Search, MapPin } from 'lucide-react';
+import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import '../styles/Navbar.css';
 
 export default function Navbar({ toggleSidebarHandler }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedPlace, setSelectedPlace] = useState(null);
+  const [placeAutocomplete, setPlaceAutocomplete] = useState(null);
+
+  // Refs for the dropdown and selected options
   const dropdownRef = useRef(null);
   const selectedOptionsRef = useRef(null);
+  const inputRef = useRef(null);
+  
+
+  // Use the Maps library to get the user's location
+  const places = useMapsLibrary("places"); // Get the Places library from the Maps API
+
+  
+  useEffect(() => {
+    if (!places || !inputRef.current) return;
+
+    const options = {
+      fields: ["geometry", "name", "formatted_address", "address_components"],
+      types: ["geocode"],
+      componentRestrictions: { country : "us" },
+    };
+
+    setPlaceAutocomplete(new places.Autocomplete(inputRef.current, options));
+  }, [places]);
+
+  useEffect(() => {
+    if (!placeAutocomplete) return;
+
+    placeAutocomplete.addListener("place_changed", () => {
+      selectedPlace(placeAutocomplete.getPlace());
+    });
+  }, [selectedPlace, placeAutocomplete]);
+
   
   // Function to toggle a category selection
   const toggleCategory = (category) => {
@@ -164,8 +196,11 @@ export default function Navbar({ toggleSidebarHandler }) {
               <MapPin className="location-icon" size={20} />
               <input 
                 type="text" 
+                ref={inputRef}
                 className="search-input location-input"
                 placeholder="Location"
+                value={selectedPlace || ''}
+                onChange={(e) => setSelectedPlace(e.target.value)}
               />
             </div>
           </div>
