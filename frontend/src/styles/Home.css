@@ -1,3 +1,6 @@
+/* Home Page Styles for HalalHub */
+
+/* Main Layout */
 .home-page {
   min-height: 100vh;
   width: 100%;
@@ -6,65 +9,155 @@
 }
 
 .main-container {
-  margin-top: 60px; /* Space for fixed navbar */
+  margin-top: 50px;
   width: 100%;
   display: flex;
+  flex-direction: row; /* Changed to row to allow sidebar to be on left */
   position: relative;
-  min-height: calc(100vh - 60px);
+  min-height: calc(100vh - 80px);
 }
 
-
-.body-container {
+/* Map Section Styling */
+.map-section {
   flex: 1;
-  min-width: 900px; /* Ensure it never collapses */
+  padding: var(--spacing-4);
   display: flex;
   flex-direction: column;
-  transition: all 0.3s ease;
+  gap: var(--spacing-4);
+  transition: margin-left 0.3s ease;
+  width: 100%;
+}
+
+/* When sidebar is open, adjust the map section */
+.map-section.with-sidebar {
   margin-left: 280px;
-  padding: var(--spacing-4);
 }
 
-.body-container.sidebar-open {
-  width: calc(100vw - 280px); /* Sidebar takes 280px, remaining for the map */
-
+.map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
 
-.body-container.sidebar-closed {
-  width: 100vw;
-  margin-left: 0;
+.map-header h1 {
+  color: var(--color-emerald-dark);
+  margin-bottom: var(--spacing-1);
+}
+
+.subtitle {
+  color: var(--color-gray-600);
+  font-size: var(--text-body-large);
+}
+
+.map-container {
+  width: 100%;
+  height: 50vh;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  box-shadow: var(--shadow-md);
+  background-color: var(--color-gray-100);
+}
+
+.map-overlay {
+  position: absolute;
+  bottom: var(--spacing-4);
+  left: var(--spacing-4);
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: var(--spacing-2) var(--spacing-4);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.map-hint {
+  font-size: var(--text-caption);
+  color: var(--color-gray-700);
+  display: flex;
+  align-items: center;
+}
+
+
+
+/* Featured Section */
+.featured-section {
+  padding: var(--spacing-4) 0;
+  width: 100%;
+}
+
+.featured-section h2 {
+  color: var(--color-teal-dark);
+  margin-bottom: var(--spacing-6);
+  text-align: center;
+}
+
+
+
+/* Media Queries */
+@media (min-width: 768px) {
+  .featured-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
   
+  .map-section {
+    padding: var(--spacing-6);
+  }
 }
 
+@media (min-width: 1024px) {
+  
+  
+  .map-section {
+    padding: var(--spacing-8);
+  }
+  
+
+}
+
+/* Mobile adjustments for sidebar */
+@media (max-width: 768px) {
+ 
+  
+  .map-section.with-sidebar {
+    margin-left: 0;
+    padding-left: 280px;
+  }
+  
+
+}
 
 /* Dark Mode Adjustments */
 @media (prefers-color-scheme: dark) {
   
-  .reset-filters {
-    background-color: var(--color-gray-700);
+  .map-overlay {
+    background-color: rgba(31, 41, 55, 0.8);
+  }
+  
+  .map-hint {
     color: var(--color-gray-300);
   }
-  
-  .reset-filters:hover {
-    background-color: var(--color-gray-600);
+
+}
+
+/* Animations - updated for left slide */
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
-  
-  .body-container {
-    width: calc(100% - 240px);
-    margin-left: 240px;
-    padding: var(--spacing-2);
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  
-}
-
-@media (max-width: 576px) {
-
-  .body-container {
-    width: 100%;
-    margin-left: 0;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
 }

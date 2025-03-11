@@ -24,7 +24,7 @@ export default  function MapComponent () {
 
   return (
     <div className="map-container">
-      <h1>Map Component</h1>
+
 
       <div className="map">
         <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
