@@ -27,7 +27,7 @@ export default  function MapComponent () {
 
 
       <div className="map">
-        <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+        {/* <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}> */}
           {userLocation ? ( // Render the map only after getting location
             <Map
               style={{ width: "100%", height: "50vh" }}
@@ -47,7 +47,7 @@ export default  function MapComponent () {
           ) : (
             <p>Loading map...</p>
           )}
-        </APIProvider>
+        {/* </APIProvider> */}
       </div>
     </div>
   );
