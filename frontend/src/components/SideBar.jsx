@@ -140,7 +140,7 @@ export default function SideBar({ toggleSidebar, manageSidebar, applyFilters }) 
         </button>  
       </div>
 
-      {/* Category filter */}
+      {/* Category filter
       <div className="filter-group">
         <h3 className="filter-title">Category</h3>
         <ul className="filter-list">
@@ -159,7 +159,7 @@ export default function SideBar({ toggleSidebar, manageSidebar, applyFilters }) 
             </li>
           ))}
         </ul>
-      </div>
+      </div> */}
       
       {/* Distance filter */}
       <div className="filter-group">

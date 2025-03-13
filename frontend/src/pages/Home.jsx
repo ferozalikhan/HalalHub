@@ -9,6 +9,12 @@ import PlaceList from "../components/PlaceList.jsx";
 
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [selectedPlace, setSelectedPlace] = useState({
+    name: "", // e.g., "Live Oak"
+    formattedAddress: "", // e.g., "Live Oak, CA 95953, USA"
+    latitude: null, // e.g., 39.334
+    longitude: null, // e.g., -121.735
+  });
 
   const toggleSidebar = () => {
     setSidebarOpen((prevState) => !prevState);
@@ -17,7 +23,7 @@ export default function Home() {
   return (
     <div className="home-page">
       {/* Pass toggleSidebarHandler to Navbar */}
-      <Navbar toggleSidebarHandler={toggleSidebar} />
+      <Navbar toggleSidebarHandler={toggleSidebar} selectedPlace={selectedPlace} setSelectedPlace={setSelectedPlace} />
 
 
       <main className="main-container">
@@ -33,7 +39,7 @@ export default function Home() {
                         
                     </div>                    
                     <div className="map-container">
-                        <MapComponent />
+                        <MapComponent selectedPlace={selectedPlace} setSelectedPlace={setSelectedPlace} />
                         <div className="map-overlay">
                             <span className="map-hint">Click on a marker to view details</span>
                         </div>

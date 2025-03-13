@@ -4,15 +4,27 @@ import { Search, MapPin } from 'lucide-react';
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import '../styles/Navbar.css';
 
-export default function Navbar({ toggleSidebarHandler }) {
+ // Helper function to get display labels for categories
+ const getCategoryLabel = (category) => {
+  const labels = {
+    restaurants: 'Halal Restaurants',
+    foodtrucks: 'Food Trucks',
+    groceries: 'Grocery Stores',
+    // Add more categories here
+  };
+  return labels[category] || category;
+};
+
+export default function Navbar({ toggleSidebarHandler, selectedPlace, setSelectedPlace }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedPlace, setSelectedPlace] = useState(null);
+  
   const [placeAutocomplete, setPlaceAutocomplete] = useState(null);
 
   // Refs for the dropdown and selected options
   const dropdownRef = useRef(null);
   const selectedOptionsRef = useRef(null);
+
   const inputRef = useRef(null);
   
 
@@ -23,6 +35,7 @@ export default function Navbar({ toggleSidebarHandler }) {
   useEffect(() => {
     if (!places || !inputRef.current) return;
 
+    // set the options for the autocomplete so it uses less data
     const options = {
       fields: ["geometry", "name", "formatted_address", "address_components"],
       types: ["geocode"],
@@ -30,15 +43,39 @@ export default function Navbar({ toggleSidebarHandler }) {
     };
 
     setPlaceAutocomplete(new places.Autocomplete(inputRef.current, options));
+
+    return () => {
+      if (placeAutocomplete) {
+        placeAutocomplete.unbindAll();
+      }
+    }
+
   }, [places]);
 
   useEffect(() => {
     if (!placeAutocomplete) return;
 
     placeAutocomplete.addListener("place_changed", () => {
-      selectedPlace(placeAutocomplete.getPlace());
+      const place = placeAutocomplete.getPlace();
+    if (!place.geometry) {
+      console.error("Place does not have geometry");
+      return;
+    }
+
+    const addressComponents = place.address_components;
+    const city = addressComponents[0]?.long_name;
+    const state = addressComponents[2]?.short_name;
+    const country = addressComponents[3]?.short_name;
+    const formattedAddress = `${city}, ${state}, ${country}`;
+
+    setSelectedPlace({
+      name: place.name,
+      formattedAddress,
+      latitude: place.geometry.location.lat(),
+      longitude: place.geometry.location.lng(),
     });
-  }, [selectedPlace, placeAutocomplete]);
+  });
+  }, [placeAutocomplete]);
 
   
   // Function to toggle a category selection
@@ -50,16 +87,6 @@ export default function Navbar({ toggleSidebarHandler }) {
     }
   };
   
-  // Helper function to get display labels for categories
-  const getCategoryLabel = (category) => {
-    const labels = {
-      restaurants: 'Halal Restaurants',
-      foodtrucks: 'Food Trucks',
-      groceries: 'Grocery Stores',
-      // Add more categories here
-    };
-    return labels[category] || category;
-  };
   
   // Remove a selected category
   const removeCategory = (category) => {
@@ -163,6 +190,7 @@ export default function Navbar({ toggleSidebarHandler }) {
                 <div 
                   className="multiselect-display search-input"
                   onClick={() => setDropdownOpen(!dropdownOpen)}
+                  aria-expanded={dropdownOpen} // ARIA attribute to indicate the dropdown state.
                 >
                   {renderSearchDisplay()}
                   <ChevronDown 
@@ -199,8 +227,8 @@ export default function Navbar({ toggleSidebarHandler }) {
                 ref={inputRef}
                 className="search-input location-input"
                 placeholder="Location"
-                value={selectedPlace || ''}
-                onChange={(e) => setSelectedPlace(e.target.value)}
+                value={selectedPlace.formattedAddress || ''}
+                onChange={(e) => setSelectedPlace({ ...selectedPlace, formattedAddress: e.target.value })}
               />
             </div>
           </div>

@@ -1,3 +1,47 @@
+/* override google autocomplete dropdown */
+/* apply the same styles that we did to the other dropdown */
+.pac-container {
+    z-index: 10000 !important;
+    background-color: var(--color-white);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    max-height: 250px;
+    overflow-y: auto;
+    font-size: var(--text-body);
+    color: var(--color-white);
+    padding: var(--spacing-2);
+    margin-top: var(--spacing-2);
+}
+
+    /* change the suggestion color to white */
+
+.pac-item {
+  color: var(--color-white);
+}
+
+.pac-item .pac-item-query {
+  /* Highlight the main query */
+  font-weight: bold;
+  color: var(--color-white);
+
+}
+
+.pac-item:hover {
+  /* do the same as the other dropdown */
+  background-color: rgba(26, 147, 111, 0.2);
+
+
+}
+
+
+
+/* Remove Google branding  */
+.pac-logo:after {
+    display: none !important;
+}
+
+
 /* Navbar.css */
 .navbar {
     position: fixed; /* Change from sticky to fixed */
@@ -378,6 +422,17 @@
     background-color: var(--color-bg-secondary);
     border-color: var(--color-gray-700);
   }
+
+  .pac-container {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-gray-700);
+    /* chagne the text color to white */
+    color: var(--color-white);
+
+    
+  }
+    
+}
   
   .option:hover, .option.selected {
     background-color: rgba(26, 147, 111, 0.2);
@@ -398,4 +453,3 @@
   .btn-login:hover {
     background-color: rgba(26, 147, 111, 0.1);
   }
-}
