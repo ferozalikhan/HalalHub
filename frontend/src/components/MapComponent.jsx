@@ -113,8 +113,6 @@ export default  function MapComponent ({selectedPlace, setSelectedPlace}) {
                 <AdvancedMarker
                     ref={markerRef}
                     position={{ lat: selectedPlace.latitude, lng: selectedPlace.longitude }}
-                    draggable
-                    // as user move the map , update the selected place
                     
                     >
                       <Pin background={'#4285F4'} glyphColor={'#FFFFFF'} borderColor={'#1A73E8'} />
