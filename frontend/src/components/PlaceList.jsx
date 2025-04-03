@@ -1,7 +1,49 @@
 import { FaStar } from "react-icons/fa";
 import "../styles/PlaceList.css";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
-export default function PlaceList() {
+
+import { use } from "react";
+
+export default function PlaceList({
+selectedPlace // e.g., { name: "Live Oak", formattedAddress: "Live Oak, CA 95953, USA", latitude: 39.334, longitude: -121.735 }
+
+})
+{
+
+    // useState to manage the fetched places (e.g., restaurants, stores, food trucks)
+    const [places, setPlaces] = useState([]);
+    // useState to manage the loading state
+    const [loading, setLoading] = useState(true);
+    
+
+
+    useEffect(() => {
+        const fetchPlaces = async () => {
+            if (!selectedPlace?.latitude || !selectedPlace?.longitude) return;
+    
+            try {
+                const response = await axios.post("http://localhost:3000/api/places/restaurants/nearby", {
+                    lat: selectedPlace.latitude,
+                    lng: selectedPlace.longitude
+                });
+    
+                console.log("Fetched places:", response.data.places);
+                setPlaces(response.data.places);  // Update state
+    
+            } catch (error) {
+                console.error("Error fetching places:", error.response?.data || error.message);
+            }
+        };
+    
+        fetchPlaces();
+    }, [selectedPlace]);
+     // Dependency array ensures re-fetching when selectedPlace changes
+    
+
+
+
   return (
     <>
       {/* Featured sections */}
