@@ -21,8 +21,8 @@ export default  function MapComponent ({selectedPlace, setSelectedPlace}) {
     useEffect(() => {
       if (!map || !place || !marker) return;
       // test 
-      console.log("MapHandler: place", place);
-      console.log("MapHandler: marker", marker);
+        // console.log("MapHandler: place", place);
+        // console.log("MapHandler: marker", marker);
       map.setCenter({ lat: place.latitude, lng: place.longitude });
       marker.position = { lat: place.latitude, lng: place.longitude };
       

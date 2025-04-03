@@ -48,7 +48,7 @@ export default function Home() {
                     {/* Featured sections */}
                     <section className="featured-section">
                         <h2>Top Rated Near You</h2>
-                        <PlaceList />
+                        <PlaceList  selectedPlace={selectedPlace} />
                     </section>
                 </div>
         
