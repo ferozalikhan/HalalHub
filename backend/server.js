@@ -1,25 +1,35 @@
-// Import modules
+// server.js
 const express = require('express');
 const dotenv = require('dotenv');
-const connectDB = require('./config/db');
+const cors = require('cors');
+const placesRoutes = require('./routes/placesRoutes');
 
-// Load environment variables
+
+// Load environment variables from .env file
 dotenv.config();
 
-// Connect to MongoDB
-connectDB();
-
-// Initialize Express
 const app = express();
-app.use(express.json()); // Allows app to handle JSON requests
 
-// Define a basic route
+// Middleware to enable CORS
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Allow only frontend's domain
+  methods: 'GET,POST,PUT,DELETE',
+  allowedHeaders: 'Content-Type,Authorization'
+}));
+
+
+
+// Middleware to parse JSON bodies
+app.use(express.json());
+
 app.get('/', (req, res) => {
-  res.send('API is running...');
+  res.send('Hello from Express!');
 });
 
-// Set up the port
-const PORT = process.env.PORT || 5000;
+// Define the routes
+app.use('/api/places', placesRoutes); // Mount the places routes
 
-// Start the server
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
