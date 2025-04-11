@@ -6,15 +6,22 @@ import "../styles/Home.css";
 import "../App.css";
 import { FaFilter, FaTimes, FaStar, FaUtensils, FaTruck, FaStore } from 'react-icons/fa';
 import PlaceList from "../components/PlaceList.jsx";
+import axios from "axios";
+import { useEffect } from "react";
 
-export default function Home() {
+export default function Home(
+  {
+  userLocation,
+  setUserLocation,
+  selectedPlace,
+  setSelectedPlace,
+  places,
+  setPlaces,
+  loading,
+  }
+) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [selectedPlace, setSelectedPlace] = useState({
-    name: "", // e.g., "Live Oak"
-    formattedAddress: "", // e.g., "Live Oak, CA 95953, USA"
-    latitude: null, // e.g., 39.334
-    longitude: null, // e.g., -121.735
-  });
+ 
 
   const toggleSidebar = () => {
     setSidebarOpen((prevState) => !prevState);
@@ -34,12 +41,18 @@ export default function Home() {
                     <div className="map-header">
                         <div>
                             <h1>Discover Halal Food Near You</h1>
-                            <p className="subtitle">Find the best halal options in your neighborhood</p>
+                            {/* <p className="subtitle">Find the best halal options in your neighborhood</p> */}
                         </div>
                         
                     </div>                    
                     <div className="map-container">
-                        <MapComponent selectedPlace={selectedPlace} setSelectedPlace={setSelectedPlace} />
+                        <MapComponent 
+                        userLocation={userLocation}
+                        setUserLocation={setUserLocation}
+                        selectedPlace={selectedPlace} 
+                        setSelectedPlace={setSelectedPlace}
+                        places={places}
+                         />
                         <div className="map-overlay">
                             <span className="map-hint">Click on a marker to view details</span>
                         </div>
@@ -48,7 +61,7 @@ export default function Home() {
                     {/* Featured sections */}
                     <section className="featured-section">
                         <h2>Top Rated Near You</h2>
-                        <PlaceList  selectedPlace={selectedPlace} />
+                        <PlaceList places={places} userLocation={userLocation} loading={loading} />
                     </section>
                 </div>
         

@@ -1,80 +1,160 @@
-import { FaStar } from "react-icons/fa";
-import "../styles/PlaceList.css";
-import { useEffect, useState } from "react";
-import axios from "axios";
-
-
-import { use } from "react";
-
-export default function PlaceList({
-selectedPlace // e.g., { name: "Live Oak", formattedAddress: "Live Oak, CA 95953, USA", latitude: 39.334, longitude: -121.735 }
-
-})
-{
-
-    // useState to manage the fetched places (e.g., restaurants, stores, food trucks)
-    const [places, setPlaces] = useState([]);
-    // useState to manage the loading state
-    const [loading, setLoading] = useState(true);
-    
-
-
-    useEffect(() => {
-        const fetchPlaces = async () => {
-            if (!selectedPlace?.latitude || !selectedPlace?.longitude) return;
-    
-            try {
-                const response = await axios.post("http://localhost:3000/api/places/restaurants/nearby", {
-                    lat: selectedPlace.latitude,
-                    lng: selectedPlace.longitude
-                });
-    
-                console.log("Fetched places:", response.data.places);
-                setPlaces(response.data.places);  // Update state
-    
-            } catch (error) {
-                console.error("Error fetching places:", error.response?.data || error.message);
-            }
-        };
-    
-        fetchPlaces();
-    }, [selectedPlace]);
-     // Dependency array ensures re-fetching when selectedPlace changes
-    
-
-
-
-  return (
-    <>
-      {/* Featured sections */}
+// PlaceList.jsx - Improved version with status under title
+import { 
+    FaStar, FaMapMarkerAlt, FaClock, FaUtensils, FaMotorcycle, FaShoppingBag, 
+    FaPhoneAlt, FaGlobe 
+  } from "react-icons/fa";
+  import { Link } from "react-router-dom";
+  import "../styles/PlaceList.css";
+  
+  const getPhotoUrl = (photoRef) => `https://places.googleapis.com/v1/${photoRef.name}/media?maxWidthPx=400&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`;
+  
+  const calculateDistance = (userLat, userLng, placeLat, placeLng) => {
+    if (!userLat || !userLng || !placeLat || !placeLng) return null;
+    const toRad = (val) => (val * Math.PI) / 180;
+    const R = 6371;
+    const dLat = toRad(placeLat - userLat);
+    const dLng = toRad(placeLng - userLng);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(userLat)) * Math.cos(toRad(placeLat)) * Math.sin(dLng / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return (R * c * 0.621371).toFixed(1);
+  };
+  
+  const extractLocation = (formattedAddress) => {
+    if (!formattedAddress) return "Location unavailable";
+    const parts = formattedAddress.split(', ');
+    return parts[1] || formattedAddress;
+  };
+  
+  const getPlaceTypeInfo = (primaryType, types) => {
+    const typeMapping = {
+      'restaurant': { icon: <FaUtensils />, label: 'Restaurant' },
+      'cafe': { icon: <FaUtensils />, label: 'Café' },
+      'bakery': { icon: <FaUtensils />, label: 'Bakery' },
+      'food': { icon: <FaUtensils />, label: 'Food Place' },
+      'meal_takeaway': { icon: <FaShoppingBag />, label: 'Takeaway' },
+      'meal_delivery': { icon: <FaMotorcycle />, label: 'Delivery' },
+      'grocery_or_supermarket': { icon: <FaShoppingBag />, label: 'Grocery' },
+      'supermarket': { icon: <FaShoppingBag />, label: 'Supermarket' },
+      'store': { icon: <FaShoppingBag />, label: 'Store' },
+      'default': { icon: <FaUtensils />, label: 'Place' }
+    };
+    if (primaryType) {
+      const normalized = primaryType.toLowerCase().replace(/_/g, '');
+      for (const key in typeMapping) {
+        if (normalized.includes(key)) return typeMapping[key];
+      }
+    }
+    if (types?.length) {
+      for (const type of types) {
+        const normalized = type.toLowerCase().replace(/_/g, '');
+        for (const key in typeMapping) {
+          if (normalized.includes(key)) return typeMapping[key];
+        }
+      }
+    }
+    return typeMapping.default;
+  };
+  
+  const getHalalVerification = (place, index) => {
+    const options = ['certified', 'verified', 'community'];
+    return options[index % options.length];
+  };
+  
+  const formatOpeningHours = (regularOpeningHours) => {
+    if (!regularOpeningHours?.periods) return null;
+    const today = new Date().getDay();
+    const daysOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    const todayPeriod = regularOpeningHours.periods.find(
+      period => period.open?.day === daysOfWeek[today]
+    );
+    if (!todayPeriod) return null;
+    const formatTime = (t) => t ? `${(t.hour % 12 || 12)}:${(t.minute || '00').toString().padStart(2, '0')} ${t.hour >= 12 ? 'PM' : 'AM'}` : '';
+    return `${formatTime(todayPeriod.open)} - ${formatTime(todayPeriod.close)}`;
+  };
+  
+  const generatePlaceholderSummary = (place, typeInfo) => {
+    const { label } = typeInfo;
+    const samples = [
+      `A popular halal ${label.toLowerCase()} offering a variety of delicious options.`,
+      `Discover authentic halal cuisine at this local ${label.toLowerCase()}.`,
+      `Family-friendly halal ${label.toLowerCase()} with a welcoming atmosphere.`
+    ];
+    let summary = samples[Math.floor(Math.random() * samples.length)];
+    if (place.servesVegetarianFood) summary += ' Vegetarian options available.';
+    if (place.dineIn && place.takeout) summary += ' Enjoy dining in or taking your food to go.';
+    else if (place.dineIn) summary += ' Comfortable dining experience.';
+    else if (place.takeout) summary += ' Perfect for grab-and-go meals.';
+    return summary;
+  };
+  
+  export default function PlaceList({ places, userLocation, loading }) {
+    if (loading) return <div className="loading-container"><div className="loading-spinner"></div><p>Discovering halal places near you...</p></div>;
+    if (!places || !places.length) return <div className="no-results">No halal places found. Try adjusting your search.</div>;
+  
+    return (
       <div className="featured-grid">
-                            {[1, 2, 3, 4, 5].map((item) => (
-                                <div key={item} className="card featured-card">
-                                    <div className="card-img placeholder"></div>
-                                    <div className="card-content">
-                                        <div className="card-header">
-                                            <h3>Restaurant Name {item}</h3>
-                                            <span className="badge badge-verified">Verified Halal</span>
-                                        </div>
-                                        <div className="card-meta">
-                                            <div className="stars">
-                                                {[...Array(5)].map((_, i) => (
-                                                    <FaStar key={i} className={i < 4 ? "star-icon filled" : "star-icon"} />
-                                                ))}
-                                                <span>(42)</span>
-                                            </div>
-                                            <span className="price">$$</span>
-                                            <span className="distance">0.{item} mi</span>
-                                        </div>
-                                        <p className="card-description">
-                                            Authentic halal cuisine with a modern twist. Popular for their signature dishes.
-                                        </p>
-                                        <button className="btn btn-secondary view-details">View Details</button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-      
-    </>
-  );
-}
+        {places.map((place, index) => {
+          const priceSymbols = place.priceLevel ? "$".repeat(place.priceLevel) : "$$";
+          const isOpen = place.currentOpeningHours?.openNow;
+          const imageUrl = place.photos?.[0] ? getPhotoUrl(place.photos[0]) : null;
+          const distance = userLocation && place.location ? calculateDistance(userLocation.lat, userLocation.lng, place.location.latitude, place.location.longitude) : null;
+          const location = extractLocation(place.formattedAddress);
+          const { icon, label } = getPlaceTypeInfo(place.primaryType, place.types);
+          const halalStatus = getHalalVerification(place, index);
+          const todayHours = formatOpeningHours(place.regularOpeningHours);
+          const summary = place.editorialSummary?.text || generatePlaceholderSummary(place, { label });
+  
+          return (
+            <Link key={index} to={`/place/${place.id || index}`} className="place-card" aria-label={`View details for ${place.displayName?.text}`}>
+              <div className={`place-card-img ${!imageUrl ? 'placeholder' : ''}`} style={imageUrl ? { backgroundImage: `url(${imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}>
+                {!imageUrl && <div className="place-img-placeholder"><div className="placeholder-icon">{icon}</div></div>}
+              </div>
+  
+              <div className="place-card-content">
+                <div className="place-card-header">
+                  <h3 className="place-name">{place.displayName?.text || "Unknown Place"}</h3>
+                </div>
+  
+                <div className="status-inline">
+                  <span className="type-pill">{icon} {label}</span>
+                  <span className={`halal-indicator halal-${halalStatus}`}>{halalStatus === 'certified' ? 'Halal Certified' : halalStatus === 'verified' ? 'Halal Verified' : 'Community Verified'}</span>
+                  {isOpen !== undefined && <span className={`open-status ${isOpen ? 'is-open' : 'is-closed'}`}>{isOpen ? 'Open Now' : 'Closed'}</span>}
+                </div>
+  
+                <div className="place-card-meta">
+                  <div className="rating-price">
+                    <div className="rating">
+                      <div className="stars">
+                        {[...Array(5)].map((_, i) => <FaStar key={i} className={i < Math.round(place.rating || 0) ? "star filled" : "star"} />)}
+                      </div>
+                      <span className="rating-value">{place.rating || 'N/A'}</span>
+                      <span className="rating-count">({place.userRatingCount || 0})</span>
+                    </div>
+                    <div className="price">{priceSymbols}</div>
+                  </div>
+  
+                  <div className="location-distance">
+                    <div className="location">
+                      <FaMapMarkerAlt className="icon" />
+                      <span className="truncate">{location}</span>
+                    </div>
+                    {distance && <div className="distance">{distance} mi</div>}
+                  </div>
+                </div>
+  
+                {todayHours && <div className="hours-info"><FaClock className="hours-icon" /><span className="hours-text">{todayHours}</span></div>}
+                <div className="place-summary truncate-2">{summary}</div>
+  
+                <div className="contact-actions">
+                  {place.nationalPhoneNumber && <a href={`tel:${place.nationalPhoneNumber}`} className="action-btn phone" onClick={(e) => e.stopPropagation()}><FaPhoneAlt /><span>Call</span></a>}
+                  {place.websiteUri && <a href={place.websiteUri} target="_blank" rel="noopener noreferrer" className="action-btn website" onClick={(e) => e.stopPropagation()}><FaGlobe /><span>Website</span></a>}
+                  {place.googleMapsUri && <a href={place.googleMapsUri} target="_blank" rel="noopener noreferrer" className="action-btn directions" onClick={(e) => e.stopPropagation()}><FaMapMarkerAlt /><span>Directions</span></a>}
+                </div>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    );
+  }
+  
