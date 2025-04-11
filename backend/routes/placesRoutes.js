@@ -2,51 +2,72 @@ const express = require("express");
 const axios = require("axios");
 const router = express.Router();
 
-// Helper function to fetch nearby restaurants from Google Places API
 router.post("/restaurants/nearby", async (req, res) => {
-  const lat = parseFloat(req.body.lat);
-  const lng = parseFloat(req.body.lng);
-  const radius = 5000.0; // Ensure it's a float
+  const  {lat, lng, pageToken} = req.body;
+  const textQuery =  "halal restaurants";
+  const radius = 5000;
 
-  // Validate input
-  if (!lat || !lng) {
-    return res.status(400).json({ message: "Latitude and longitude are required" });
-  }
-
-  const GOOGLE_PLACES_URL = "https://places.googleapis.com/v1/places:searchNearby";
   const API_KEY = process.env.GOOGLE_API_KEY;
+  const GOOGLE_TEXT_SEARCH_URL = "https://places.googleapis.com/v1/places:searchText";
 
   const requestBody = {
-    includedTypes: ["restaurant"],
-    locationRestriction: {
-      circle: {
-        center: { latitude: lat, longitude: lng },
-        radius: radius, // 5000m (5km)
+    textQuery,
+    pageSize: 10,
+    languageCode: "en",
+    ...(pageToken && { pageToken }),
+    ...(lat && lng && {
+      locationBias: {
+        circle: {
+          center: { latitude: lat, longitude: lng },
+          radius,
+        },
       },
-    },
+    }),
   };
-
-  // const headers = {
-  //   "Content-Type": "application/json",
-  //   "X-Goog-Api-Key": API_KEY,
-  //   "X-Goog-FieldMask": "*",
-  // };
 
   const headers = {
     "Content-Type": "application/json",
     "X-Goog-Api-Key": API_KEY,
-    // "X-Goog-FieldMask": "*",
-     "X-Goog-FieldMask": "places.paymentOptions,places.servesBeer,places.displayName,places.formattedAddress,places.types,places.websiteUri,places.googleMapsUri,places.editorialSummary,places.location.latitude,places.priceLevel,places.priceRange,places.primaryType,places.restroom,places.servesWine,places.location.longitude,places.nationalPhoneNumber,places.rating,places.userRatingCount,places.photos,places.regularOpeningHours,places.currentOpeningHours.openNow"
-};
-
+    "X-Goog-FieldMask": [
+      "places.displayName",
+      "places.formattedAddress",
+      "places.types",
+      "places.primaryType",
+      "places.location.latitude",
+      "places.location.longitude",
+      "places.rating",
+      "places.userRatingCount",
+      "places.priceLevel",
+      "places.photos",
+      "places.currentOpeningHours.openNow",
+      "places.regularOpeningHours",
+      "places.websiteUri",
+      "places.nationalPhoneNumber",
+      "places.googleMapsUri",
+      "places.editorialSummary",
+      "places.restroom",
+      "places.paymentOptions",
+      "places.servesBeer",
+      "places.servesWine",
+      "places.dineIn",
+      "places.delivery",
+      "places.takeout",
+      "places.servesVegetarianFood"
+    ].join(","),
+  };
 
   try {
-    const response = await axios.post(GOOGLE_PLACES_URL, requestBody, { headers });
-    console.log("Google Places API response:", response.data);
-    res.json(response.data);
+    const response = await axios.post(GOOGLE_TEXT_SEARCH_URL, requestBody, { headers });
+    res.status(200).json({
+      places: response.data.places || [],
+      nextPageToken: response.data.nextPageToken || null
+    });
   } catch (error) {
-    console.error("Error fetching data from Google API:", error.response?.data || error.message);
-    res.status(500).json({ message: "Error fetching data from Google Places API", error: error.response?.data || error.message });
+    console.error("❌ Text Search API error:", error.response?.data || error.message);
+    res.status(500).json({
+      message: "Error fetching results from Google Text Search API",
+      error: error.response?.data || error.message
+    });
   }
 });
 
