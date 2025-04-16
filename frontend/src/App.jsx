@@ -16,7 +16,7 @@ function App() {
     longitude: null, // e.g., -121.735
   });
   const [userLocation, setUserLocation] = useState(null);
-
+  const [searchMode, setSearchMode] = useState("nearby");
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,10 +26,16 @@ useEffect(() => {
 
         try {
             setLoading(true);
-            const response = await axios.post("http://localhost:3000/api/places/restaurants/nearby", {
+            const response = await axios.get("http://localhost:3000/api/places/search", {
+              params: {
+                mode: searchMode,
                 lat: selectedPlace.latitude,
-                lng: selectedPlace.longitude
+                lng: selectedPlace.longitude,
+                category: "all"
+              }
             });
+            
+            
 
             console.log("Fetched places:", response.data.places);
             setPlaces(response.data.places);  
