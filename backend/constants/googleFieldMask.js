@@ -62,7 +62,8 @@ const basicFields = [
     "places.dineIn",
     "places.takeout",
     "places.delivery",
-    "places.servesVegetarianFood"
+    "places.servesVegetarianFood",
+    "nextPageToken",
   ];
   
   // Final combined field mask string
