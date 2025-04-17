@@ -15,7 +15,7 @@ import '../styles/Navbar.css';
   return labels[category] || category;
 };
 
-export default function Navbar({ toggleSidebarHandler, selectedPlace, setSelectedPlace }) {
+export default function Navbar({ toggleSidebarHandler, selectedPlace, setSelectedPlace, SetSearchMode } )  {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState([]);
   
@@ -24,9 +24,7 @@ export default function Navbar({ toggleSidebarHandler, selectedPlace, setSelecte
   // Refs for the dropdown and selected options
   const dropdownRef = useRef(null);
   const selectedOptionsRef = useRef(null);
-
   const inputRef = useRef(null);
-  
 
   // Use the Maps library to get the user's location
   const places = useMapsLibrary("places"); // Get the Places library from the Maps API
@@ -62,18 +60,36 @@ export default function Navbar({ toggleSidebarHandler, selectedPlace, setSelecte
       return;
     }
 
+    // !! Debugging: Log the place object
+    console.log("Place changed:", place);
+
+    // const addressComponents = place.address_components;
+    // const city = addressComponents[0]?.long_name;
+    // const state = addressComponents[2]?.short_name;
+    // const country = addressComponents[3]?.short_name;
+    // const formattedAddress = `${city}, ${state}, ${country}`;
     const addressComponents = place.address_components;
-    const city = addressComponents[0]?.long_name;
-    const state = addressComponents[2]?.short_name;
-    const country = addressComponents[3]?.short_name;
-    const formattedAddress = `${city}, ${state}, ${country}`;
+
+    const getComponent = (type) =>
+      addressComponents?.find((comp) => comp.types.includes(type))?.long_name || "";
+
+    const city = getComponent("locality") || getComponent("administrative_area_level_2");
+    const state = getComponent("administrative_area_level_1");
+    const country = getComponent("country");
+
+    const formattedAddress = [city, state, country].filter(Boolean).join(", ");
+
 
     setSelectedPlace({
-      name: place.name,
+      name: city,
       formattedAddress,
       latitude: place.geometry.location.lat(),
       longitude: place.geometry.location.lng(),
     });
+    // !! Debugging: Log the selected place
+    console.log("Selected place:", selectedPlace);
+
+    SetSearchMode("text");
   });
   }, [placeAutocomplete]);
 

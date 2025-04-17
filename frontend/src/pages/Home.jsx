@@ -18,6 +18,7 @@ export default function Home(
   setSelectedPlace,
   places,
   setPlaces,
+  SetSearchMode,
   loading,
   }
 ) {
@@ -31,7 +32,7 @@ export default function Home(
   return (
     <div className="home-page">
       {/* Pass toggleSidebarHandler to Navbar */}
-      <Navbar toggleSidebarHandler={toggleSidebar} selectedPlace={selectedPlace} setSelectedPlace={setSelectedPlace} />
+      <Navbar toggleSidebarHandler={toggleSidebar} selectedPlace={selectedPlace} setSelectedPlace={setSelectedPlace} SetSearchMode= {SetSearchMode}/>
 
 
       <main className="main-container">
@@ -52,6 +53,7 @@ export default function Home(
                         setUserLocation={setUserLocation}
                         selectedPlace={selectedPlace} 
                         setSelectedPlace={setSelectedPlace}
+                        SetSearchMode={SetSearchMode}
                         places={places}
                          />
                         <div className="map-overlay">

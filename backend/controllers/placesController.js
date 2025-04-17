@@ -2,20 +2,32 @@ const axios = require("axios");
 const { fieldMask,categoryMap} = require("../constants/googleFieldMask");
 
 exports.searchPlacesController = async (req, res) => {
-  //! Debug logs
-  console.log("🚀 Places API request received");
-  console.log("Request query:", req.query);
-
+  // Extract query parameters
   const { mode = "text", query, lat, lng, category, pageToken } = req.query;
+    //! Debug logs
+    console.group("📦 Original Request Params");
+    console.log("Mode:", mode);
+    console.log("Query:", query);
+    console.log("Lat/Lng:", lat, lng);
+    console.log("Category:", category);
+    console.groupEnd();
+  // default values 
   const radius = 5000; // 5km
   const rangeSize = 20;
   const fallbackCity = "New York"; // or pass from frontend
   const cat = categoryMap[category] || categoryMap.all;
+  const finalQuery =
+  query && query.trim()
+    ? `${cat.keyword} in ${query.trim()}`
+    : cat.keyword;
+
   let requestBody = {};
   let apiUrl = "";
 
   // ! Debug logs
-  console.log("Resolved category:", cat);
+  console.group("📦 Google Places Request");
+  console.log("category:", cat);
+  console.log("finalQuery:", finalQuery);
 
 
   // API key from environment variables
@@ -32,11 +44,11 @@ exports.searchPlacesController = async (req, res) => {
   if (mode === "text") {
     apiUrl = TEXT_SEARCH_URL;
     requestBody = {
-        textQuery: query || cat.keyword,
+        textQuery: finalQuery,
         ...(cat.type && { includedType: cat.type }),
       pageSize: rangeSize,
-      languageCode: "en",
       ...(pageToken && { pageToken }),
+      languageCode: "en",
       ...(lat && lng && {
         locationBias: {
           circle: {
