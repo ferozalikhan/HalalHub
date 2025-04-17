@@ -68,17 +68,25 @@ export default function Navbar({ toggleSidebarHandler, selectedPlace, setSelecte
     // const state = addressComponents[2]?.short_name;
     // const country = addressComponents[3]?.short_name;
     // const formattedAddress = `${city}, ${state}, ${country}`;
-    const addressComponents = place.address_components;
 
-    const getComponent = (type) =>
-      addressComponents?.find((comp) => comp.types.includes(type))?.long_name || "";
+    if (!place?.address_components) return;
 
-    const city = getComponent("locality") || getComponent("administrative_area_level_2");
-    const state = getComponent("administrative_area_level_1");
-    const country = getComponent("country");
+    let city = "";
+    let state = "";
+    let country = ""; 
+
+    const addressComponents = place?.address_components || [];
+    for (const component of addressComponents) {
+      if (component.types.includes("locality")) {
+        city = component.long_name;
+      } else if (component.types.includes("administrative_area_level_1")) {
+        state = component.short_name;
+      } else if (component.types.includes("country")) {
+        country = component.short_name;
+      }
+    }
 
     const formattedAddress = [city, state, country].filter(Boolean).join(", ");
-
 
     setSelectedPlace({
       name: city,
