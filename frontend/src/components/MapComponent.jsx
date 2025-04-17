@@ -13,6 +13,7 @@ export default function MapComponent({
   setUserLocation,
   selectedPlace,
   setSelectedPlace,
+  SetSearchMode,
   places = [] // <-- Accept array of places
 }) {
   const [markerRef, marker] = useAdvancedMarkerRef();
@@ -66,6 +67,7 @@ export default function MapComponent({
           latitude,
           longitude,
         });
+        SetSearchMode("nearby");
       } else {
         setSelectedPlace(defaultLocation);
       }

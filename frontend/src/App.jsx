@@ -16,38 +16,47 @@ function App() {
     longitude: null, // e.g., -121.735
   });
   const [userLocation, setUserLocation] = useState(null);
-  const [searchMode, setSearchMode] = useState("nearby");
+  // mode can be "nearby" or "text" or "drag"
+  const [searchMode, SetSearchMode] = useState("default");
   const [places, setPlaces] = useState([]);
+  const [category, setCategory] = useState("all"); // e.g., "restaurants"
   const [loading, setLoading] = useState(true);
 
-useEffect(() => {
+  // 🔁 Fetch places when selectedPlace or mode changes
+  useEffect(() => {
     const fetchPlaces = async () => {
-        if (!selectedPlace?.latitude || !selectedPlace?.longitude) return;
+      if (!selectedPlace?.latitude || !selectedPlace?.longitude) return;
 
-        try {
-            setLoading(true);
-            const response = await axios.get("http://localhost:3000/api/places/search", {
-              params: {
-                mode: searchMode,
-                lat: selectedPlace.latitude,
-                lng: selectedPlace.longitude,
-                category: "all"
-              }
-            });
-            
-            
+      try {
+        setLoading(true);
 
-            console.log("Fetched places:", response.data.places);
-            setPlaces(response.data.places);  
-        } catch (error) {
-            console.error("Error fetching places:", error.response?.data || error.message);
-        } finally {
-            setLoading(false);
+        const params = {
+          mode: searchMode,
+          lat: selectedPlace.latitude,
+          lng: selectedPlace.longitude,
+          category,
+        };
+
+        // Add query if searchMode is text (e.g. city search)
+        if (searchMode === "text") {
+          params.query = selectedPlace.name || selectedPlace.formattedAddress || "";
         }
+
+        const response = await axios.get("http://localhost:3000/api/places/search", {
+          params,
+        });
+
+        console.log("✅ Places fetched:", response.data);
+        setPlaces(response.data.places || []);
+      } catch (err) {
+        console.error("❌ Error fetching places:", err.response?.data || err.message);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchPlaces();
-}, [selectedPlace]);
+  }, [selectedPlace, searchMode, category]);
 
   return (
   
@@ -57,7 +66,7 @@ useEffect(() => {
 
       <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
         <Routes>
-          <Route path="/" element={<Home userLocation = {userLocation} setUserLocation = {setUserLocation} selectedPlace = {selectedPlace} setSelectedPlace={setSelectedPlace} places={places} setPlaces={setPlaces} loading={loading} />} />
+          <Route path="/" element={<Home userLocation = {userLocation} setUserLocation = {setUserLocation} selectedPlace = {selectedPlace} setSelectedPlace={setSelectedPlace} places={places} setPlaces={setPlaces} SetSearchMode = {SetSearchMode} loading={loading} />} />
           {/* only make thise route available when the place is selected */}
           {selectedPlace?.latitude && selectedPlace?.longitude && (
             <Route path="/place/:id" element={<PlaceDetail places={places} userLocation={userLocation}/>} />
