@@ -13,7 +13,7 @@ export default function MapComponent({
   setUserLocation,
   selectedPlace,
   setSelectedPlace,
-  SetSearchMode,
+  setSearchMode,
   places = [] // <-- Accept array of places
 }) {
   const [markerRef, marker] = useAdvancedMarkerRef();
@@ -44,22 +44,31 @@ export default function MapComponent({
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
       );
       const data = await response.json();
+      console.log("Reverse geocode data:", data);
 
+      if (data.status !== "OK" || !data.results.length) {
+        console.warn("Reverse geocoding failed or returned no results.");
+        return;
+      }
+    
       if (data.status === "OK") {
+        const place = data.results[0];
         let city = "";
         let state = "";
-        let country = "";
-        const addressComponents = data.results[0].address_components;
+        let country = ""; 
 
+        const addressComponents = place?.address_components || [];
         for (const component of addressComponents) {
-          if (component.types.includes("locality")) city = component.long_name;
-          else if (component.types.includes("administrative_area_level_1"))
+          if (component.types.includes("locality")) {
+            city = component.long_name;
+          } else if (component.types.includes("administrative_area_level_1")) {
             state = component.short_name;
-          else if (component.types.includes("country"))
+          } else if (component.types.includes("country")) {
             country = component.short_name;
+          }
         }
 
-        const formattedAddress = `${city}, ${state}, ${country}`;
+        const formattedAddress = [city, state, country].filter(Boolean).join(", ");
         setUserLocation({ lat: latitude, lng: longitude });
         setSelectedPlace({
           name: city,
@@ -67,7 +76,7 @@ export default function MapComponent({
           latitude,
           longitude,
         });
-        SetSearchMode("nearby");
+        setSearchMode("nearby");
       } else {
         setSelectedPlace(defaultLocation);
       }

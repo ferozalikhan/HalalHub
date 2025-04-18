@@ -17,9 +17,12 @@ export default function Home(
   selectedPlace,
   setSelectedPlace,
   places,
-  setPlaces,
-  SetSearchMode,
+  searchMode,
+  setSearchMode,
+  fetchNextPage,
+  hasMore,
   loading,
+  loadingMore,
   }
 ) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -32,7 +35,7 @@ export default function Home(
   return (
     <div className="home-page">
       {/* Pass toggleSidebarHandler to Navbar */}
-      <Navbar toggleSidebarHandler={toggleSidebar} selectedPlace={selectedPlace} setSelectedPlace={setSelectedPlace} SetSearchMode= {SetSearchMode}/>
+      <Navbar toggleSidebarHandler={toggleSidebar} selectedPlace={selectedPlace} setSelectedPlace={setSelectedPlace} setSearchMode= {setSearchMode}/>
 
 
       <main className="main-container">
@@ -53,7 +56,8 @@ export default function Home(
                         setUserLocation={setUserLocation}
                         selectedPlace={selectedPlace} 
                         setSelectedPlace={setSelectedPlace}
-                        SetSearchMode={SetSearchMode}
+                        searchMode={searchMode}
+                        setSearchMode={setSearchMode}
                         places={places}
                          />
                         <div className="map-overlay">
@@ -63,8 +67,29 @@ export default function Home(
                 
                     {/* Featured sections */}
                     <section className="featured-section">
-                        <h2>Top Rated Near You</h2>
-                        <PlaceList places={places} userLocation={userLocation} loading={loading} />
+                        {/* <h2>Top Rated Near You</h2> */}
+                        {/* if places.length is 0 dont show the header else dynamically show near you if mode = nearby and show in city when mode is = text */}
+                        {places.length > 0 && (
+                            <h2>{searchMode === "nearby" ? "Top Rated Near You" : `Top Rated in ${selectedPlace.name}`}</h2>
+                        )}
+                        {/* If places.length is 0 show a message */}
+                        <PlaceList 
+                        places={places}
+                         userLocation={userLocation}
+                          loading={loading}
+                         />
+                        {/* If places.length is 0 show a message */}
+                         {/* add a load more button */}
+                        {places.length > 0 && hasMore && (
+                        <div className="load-more">
+                          <button className="load-more-btn" 
+                          onClick={fetchNextPage} 
+                          disabled={loadingMore}
+                          >
+                            {loading ? "Loading..." : "Load More"}
+                          </button>
+                        </div>
+                        )}
                     </section>
                 </div>
         

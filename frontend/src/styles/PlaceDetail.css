@@ -48,6 +48,16 @@
     color: var(--color-emerald-dark);
     text-decoration: underline;
   }
+
+  /* div around load more button - would like to to show under the cards in its own column */
+
+  .load-more {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--spacing-4);
+  }
+
+  
   
   .header-content {
     display: flex;

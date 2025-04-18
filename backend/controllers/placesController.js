@@ -10,6 +10,7 @@ exports.searchPlacesController = async (req, res) => {
     console.log("Query:", query);
     console.log("Lat/Lng:", lat, lng);
     console.log("Category:", category);
+    console.log("Page Token:", pageToken);
     console.groupEnd();
   // default values 
   const radius = 5000; // 5km
@@ -107,6 +108,14 @@ const headers = {
 
   try {
     const response = await axios.post(apiUrl, requestBody, { headers });
+    // ! Debug logs
+    // use a differnt group for better readability
+    console.group("✅  Google Places Response");
+    console.log("Status:", response.status);
+    // log the length of the data array
+    console.log("Data:", response.data.places.length || 0);
+    console.log("Next Page Token:", response.data.nextPageToken);
+    console.groupEnd();
     res.status(200).json({
       places: response.data.places || [],
       nextPageToken: response.data.nextPageToken || null,

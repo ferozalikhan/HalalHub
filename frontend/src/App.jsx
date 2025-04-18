@@ -7,6 +7,9 @@ import { Routes, Route } from 'react-router-dom'
 import axios from 'axios'
 import { useEffect } from 'react'
 import PlaceDetail from './pages/PlaceDetail'
+import usePlacesSearch from './hooks/usePlaceSearch'
+
+
 function App() {
   
   const [selectedPlace, setSelectedPlace] = useState({
@@ -18,45 +21,65 @@ function App() {
   const [userLocation, setUserLocation] = useState(null);
   // mode can be "nearby" or "text" or "drag"
   const [searchMode, SetSearchMode] = useState("default");
-  const [places, setPlaces] = useState([]);
+  // const [places, setPlaces] = useState([]);
   const [category, setCategory] = useState("all"); // e.g., "restaurants"
-  const [loading, setLoading] = useState(true);
+
+  const {
+    places,
+    loading,
+    loadingMore,
+    fetchNextPage,
+    hasMore
+  } = usePlacesSearch({ selectedPlace, searchMode, category });
+
+  // !! Debugging: Log the places
+   console.log ("inside App");
+  console.log("hasMore:", hasMore);
+
+  // load more results 
+  // const [nextPageToken, setNextPageToken] = useState(null);
+  // const [loading, setLoading] = useState(true);
 
   // 🔁 Fetch places when selectedPlace or mode changes
-  useEffect(() => {
-    const fetchPlaces = async () => {
-      if (!selectedPlace?.latitude || !selectedPlace?.longitude) return;
+  // useEffect(() => {
+  //   const fetchPlaces = async () => {
+  //     if (!selectedPlace?.latitude || !selectedPlace?.longitude) return;
 
-      try {
-        setLoading(true);
+  //     try {
+  //       setLoading(true);
 
-        const params = {
-          mode: searchMode,
-          lat: selectedPlace.latitude,
-          lng: selectedPlace.longitude,
-          category,
-        };
+  //       const params = {
+  //         mode: searchMode,
+  //         lat: selectedPlace.latitude,
+  //         lng: selectedPlace.longitude,
+  //         category,
+  //         ...(nextPageToken && { pageToken: nextPageToken })
+  //       };
 
-        // Add query if searchMode is text (e.g. city search)
-        if (searchMode === "text") {
-          params.query = selectedPlace.name || selectedPlace.formattedAddress || "";
-        }
+  //       // Add query if searchMode is text (e.g. city search)
+  //       if (searchMode === "text") {
+  //         params.query = selectedPlace.name || selectedPlace.formattedAddress || "";
+  //       }
 
-        const response = await axios.get("http://localhost:3000/api/places/search", {
-          params,
-        });
+  //       const response = await axios.get("http://localhost:3000/api/places/search", {
+  //         params,
+  //       });
 
-        console.log("✅ Places fetched:", response.data);
-        setPlaces(response.data.places || []);
-      } catch (err) {
-        console.error("❌ Error fetching places:", err.response?.data || err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  //       console.log("✅ Places fetched:", response.data);
+  //       const fetchedPlaces = response.data.places || [];
+  //       // Update places state with new data
+  //       setPlaces((prev) => nextPageToken ? [...prev, ...fetchedPlaces] : fetchedPlaces);
+  //       setNextPageToken(response.data.nextPageToken || null);
 
-    fetchPlaces();
-  }, [selectedPlace, searchMode, category]);
+  //     } catch (err) {
+  //       console.error("❌ Error fetching places:", err.response?.data || err.message);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchPlaces();
+  // }, [selectedPlace, searchMode, category]);
 
   return (
   
@@ -66,7 +89,15 @@ function App() {
 
       <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
         <Routes>
-          <Route path="/" element={<Home userLocation = {userLocation} setUserLocation = {setUserLocation} selectedPlace = {selectedPlace} setSelectedPlace={setSelectedPlace} places={places} setPlaces={setPlaces} SetSearchMode = {SetSearchMode} loading={loading} />} />
+          <Route path="/" element={
+            <Home userLocation = {userLocation} setUserLocation = {setUserLocation} selectedPlace = {selectedPlace} setSelectedPlace={setSelectedPlace} places={places} setSearchMode = {SetSearchMode} 
+            searchMode = {searchMode}
+            fetchNextPage = {fetchNextPage}
+            hasMore = {hasMore}
+            loading={loading} 
+            loadingMore={loadingMore}
+          />
+          } />
           {/* only make thise route available when the place is selected */}
           {selectedPlace?.latitude && selectedPlace?.longitude && (
             <Route path="/place/:id" element={<PlaceDetail places={places} userLocation={userLocation}/>} />
