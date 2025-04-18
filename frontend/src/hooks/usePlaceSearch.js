@@ -1,30 +1,57 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-export const usePlaceSearch = ({ lat, lng, mode = "nearby", category = null }) => {
+export default function usePlacesSearch({ selectedPlace, searchMode, category }) {
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextPageToken, setNextPageToken] = useState(null);
 
-  const fetchPlaces = async () => {
-    if (!lat || !lng) return;
+  const fetchPlaces = async (isNextPage = false) => {
+    if (!selectedPlace?.latitude || !selectedPlace?.longitude) return;
 
     try {
-      setLoading(true);
-      const response = await axios.get("http://localhost:3000/api/places/search", {
-        params: {
-          mode,
-          lat,
-          lng,
-          ...(category && { category })
-        }
-      });
-      setPlaces(response.data.places || []);
-    } catch (error) {
-      console.error("Error fetching places:", error.message);
+      if (isNextPage) setLoadingMore(true);
+      else setLoading(true);
+
+      const params = {
+        mode: searchMode,
+        lat: selectedPlace.latitude,
+        lng: selectedPlace.longitude,
+        category,
+      };
+
+      if (searchMode === 'text') {
+        params.query = selectedPlace.name || selectedPlace.formattedAddress || '';
+      }
+
+      if (isNextPage && nextPageToken) {
+        params.pageToken = nextPageToken;
+      }
+
+      const response = await axios.get('http://localhost:3000/api/places/search', { params });
+
+      const newPlaces = response.data.places || [];
+      setPlaces(prev => isNextPage ? [...prev, ...newPlaces] : newPlaces);
+      setNextPageToken(response.data.nextPageToken || null);
+
+    } catch (err) {
+      console.error("❌ Error fetching places:", err.response?.data || err.message);
     } finally {
-      setLoading(false);
+      if (isNextPage) setLoadingMore(false);
+      else setLoading(false);
     }
   };
 
-  return { places, loading, fetchPlaces };
-};
+  useEffect(() => {
+    fetchPlaces();
+  }, [selectedPlace, searchMode, category]);
+
+  return {
+    places,
+    loading,
+    loadingMore,
+    fetchNextPage: () => fetchPlaces(true),
+    hasMore: !!nextPageToken,
+  };
+}

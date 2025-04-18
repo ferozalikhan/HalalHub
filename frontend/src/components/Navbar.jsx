@@ -15,11 +15,22 @@ import '../styles/Navbar.css';
   return labels[category] || category;
 };
 
-export default function Navbar({ toggleSidebarHandler, selectedPlace, setSelectedPlace, SetSearchMode } )  {
+export default function Navbar(
+  { 
+    toggleSidebarHandler,
+     selectedPlace,
+      setSelectedPlace,
+      searchMode,
+       setSearchMode,
+       } )  {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState([]);
   
   const [placeAutocomplete, setPlaceAutocomplete] = useState(null);
+  // set manual input to the selected place's formatted address
+  const [manualInput, setManualInput] = useState("");
+  
+
 
   // Refs for the dropdown and selected options
   const dropdownRef = useRef(null);
@@ -29,7 +40,13 @@ export default function Navbar({ toggleSidebarHandler, selectedPlace, setSelecte
   // Use the Maps library to get the user's location
   const places = useMapsLibrary("places"); // Get the Places library from the Maps API
 
+  useEffect(() => {
+    if (selectedPlace.formattedAddress) {
+      setManualInput(selectedPlace.formattedAddress);
+    }
+  }, [selectedPlace.formattedAddress]);
   
+      
   useEffect(() => {
     if (!places || !inputRef.current) return;
 
@@ -49,6 +66,21 @@ export default function Navbar({ toggleSidebarHandler, selectedPlace, setSelecte
     }
 
   }, [places]);
+
+
+  const updateSelectedPlace = (newPlace) => {
+    setSelectedPlace((prev) => {
+      if (
+        prev.name === newPlace.name &&
+        prev.formattedAddress === newPlace.formattedAddress &&
+        prev.latitude === newPlace.latitude &&
+        prev.longitude === newPlace.longitude
+      ) {
+        return prev; // no changes
+      }
+      return newPlace;
+    });
+  };
 
   useEffect(() => {
     if (!placeAutocomplete) return;
@@ -70,6 +102,7 @@ export default function Navbar({ toggleSidebarHandler, selectedPlace, setSelecte
     // const formattedAddress = `${city}, ${state}, ${country}`;
 
     if (!place?.address_components) return;
+    console.log("Address components:", place.address_components);
 
     let city = "";
     let state = "";
@@ -85,22 +118,28 @@ export default function Navbar({ toggleSidebarHandler, selectedPlace, setSelecte
         country = component.short_name;
       }
     }
-
+    // !! Debugging: Log the extracted city, state, and country
+    console.log("Extracted components:");
+    console.log("City:", city);
+    console.log("State:", state);
+    console.log("Country:", country);
+    
     const formattedAddress = [city, state, country].filter(Boolean).join(", ");
-
-    setSelectedPlace({
+    // !! Debugging: Log the formatted address
+    console.log("Formatted address:", formattedAddress);
+    updateSelectedPlace({
       name: city,
       formattedAddress,
       latitude: place.geometry.location.lat(),
       longitude: place.geometry.location.lng(),
     });
-    // !! Debugging: Log the selected place
-    console.log("Selected place:", selectedPlace);
-
-    SetSearchMode("text");
+    setManualInput(formattedAddress);
+    // first check if search mode is not equal to "text"
+    if (searchMode !== "text") {
+      setSearchMode("text");
+    }
   });
   }, [placeAutocomplete]);
-
   
   // Function to toggle a category selection
   const toggleCategory = (category) => {
@@ -251,8 +290,8 @@ export default function Navbar({ toggleSidebarHandler, selectedPlace, setSelecte
                 ref={inputRef}
                 className="search-input location-input"
                 placeholder="Location"
-                value={selectedPlace.formattedAddress || ''}
-                onChange={(e) => setSelectedPlace({ ...selectedPlace, formattedAddress: e.target.value })}
+                value={manualInput}
+                onChange={(e) => setManualInput(e.target.value)}
               />
             </div>
           </div>

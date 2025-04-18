@@ -87,7 +87,7 @@ import {
     return summary;
   };
   
-  export default function PlaceList({ places, userLocation, loading }) {
+  export default function PlaceList({ places, userLocation, loading,}) {
     if (loading) return <div className="loading-container"><div className="loading-spinner"></div><p>Discovering halal places near you...</p></div>;
     if (!places || !places.length) return <div className="no-results">No halal places found. Try adjusting your search.</div>;
   
@@ -151,9 +151,14 @@ import {
                   {place.googleMapsUri && <a href={place.googleMapsUri} target="_blank" rel="noopener noreferrer" className="action-btn directions" onClick={(e) => e.stopPropagation()}><FaMapMarkerAlt /><span>Directions</span></a>}
                 </div>
               </div>
+              
             </Link>
+            
           );
-        })}
+          
+        }
+        )}
+        
       </div>
     );
   }
