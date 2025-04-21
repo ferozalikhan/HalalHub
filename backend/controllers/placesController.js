@@ -106,25 +106,32 @@ const headers = {
   "X-Goog-FieldMask": fieldMask,
 };
 
-  try {
-    const response = await axios.post(apiUrl, requestBody, { headers });
-    // ! Debug logs
-    // use a differnt group for better readability
-    console.group("✅  Google Places Response");
-    console.log("Status:", response.status);
-    // log the length of the data array
-    console.log("Data:", response.data.places.length || 0);
-    console.log("Next Page Token:", response.data.nextPageToken);
-    console.groupEnd();
-    res.status(200).json({
-      places: response.data.places || [],
-      nextPageToken: response.data.nextPageToken || null,
-    });
-  } catch (error) {
-    console.error("❌ Places API error:", error.response?.data || error.message);
-    res.status(500).json({
-      message: "Error fetching results from Google Places API",
-      error: error.response?.data || error.message,
-    });
+try {
+  const response = await axios.post(apiUrl, requestBody, { headers });
+
+  // Logging
+  console.group("✅  Google Places Response");
+  console.log("Status:", response.status);
+
+  if (Array.isArray(response.data.places)) {
+    console.log("Places found:", response.data.places.length);
+  } else {
+    console.warn("⚠️ No valid places array returned:", response.data);
   }
-};
+
+  console.log("Next Page Token:", response.data.nextPageToken);
+  console.groupEnd();
+
+  res.status(200).json({
+    places: Array.isArray(response.data.places) ? response.data.places : [],
+    nextPageToken: response.data.nextPageToken || null,
+  });
+
+} catch (error) {
+  console.error("❌ Places API error:", error.response?.data || error.message);
+  res.status(500).json({
+    message: "Error fetching results from Google Places API",
+    error: error.response?.data || error.message,
+  });
+}
+}
