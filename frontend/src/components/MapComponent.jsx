@@ -7,17 +7,19 @@ import {
   useAdvancedMarkerRef,
   useMap
 } from "@vis.gl/react-google-maps";
+import { debounce } from "lodash";
 
 export default function MapComponent({
   userLocation,
   setUserLocation,
   selectedPlace,
   setSelectedPlace,
+  searchMode,
   setSearchMode,
   places = [] // <-- Accept array of places
 }) {
   const [markerRef, marker] = useAdvancedMarkerRef();
-
+  const [hasDragged, setHasDragged] = useState(false);
   const defaultLocation = {
     name: "New York City",
     formattedAddress: "New York City, NY, USA",
@@ -38,7 +40,7 @@ export default function MapComponent({
     return null;
   };
 
-  const reverseGeocode = async (latitude, longitude) => {
+  const reverseGeocode = async (latitude, longitude, mode = "nearby") => {
     try {
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
@@ -69,17 +71,26 @@ export default function MapComponent({
         }
 
         const formattedAddress = [city, state, country].filter(Boolean).join(", ");
-        setUserLocation({ lat: latitude, lng: longitude });
+
         setSelectedPlace({
           name: city,
           formattedAddress,
           latitude,
           longitude,
         });
+        // only update the user location if the mode is "nearby"
+        if (mode === "nearby") {
+        setUserLocation({ lat: latitude, lng: longitude });
         setSearchMode("nearby");
+        }
+        else if (mode === "drag")
+        {
+          setSearchMode("drag");
+        }
       } else {
         setSelectedPlace(defaultLocation);
       }
+      
     } catch (error) {
       console.error("Reverse geocoding error:", error);
       setSelectedPlace(defaultLocation);
@@ -108,6 +119,19 @@ export default function MapComponent({
             }}
             defaultZoom={13}
             mapId={import.meta.env.VITE_GOOGLE_MAPS_MAP_ID}
+            // ** events : idle - for detecting when the dragging is done
+            onIdle={
+              ({ latLng }) => {
+                const lat = latLng.lat();
+                const lng = latLng.lng();
+                if (hasDragged) {
+                  reverseGeocode(lat, lng, "drag");
+                  console.log("User drag detected:", lat, lng);
+                } else {
+                  setHasDragged(true); // skip first idle trigger
+                }
+              }
+            }
           >
             {/* 🔵 User’s Marker */}
             <AdvancedMarker
