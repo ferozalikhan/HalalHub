@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   APIProvider,
   Map,
@@ -8,6 +8,9 @@ import {
   useMap
 } from "@vis.gl/react-google-maps";
 import { debounce } from "lodash";
+import { CodeSquare } from "lucide-react";
+
+
 
 export default function MapComponent({
   userLocation,
@@ -19,7 +22,7 @@ export default function MapComponent({
   places = [] // <-- Accept array of places
 }) {
   const [markerRef, marker] = useAdvancedMarkerRef();
-  const [hasDragged, setHasDragged] = useState(false);
+  const hasDraggedRef = useRef(false);
   const defaultLocation = {
     name: "New York City",
     formattedAddress: "New York City, NY, USA",
@@ -27,8 +30,45 @@ export default function MapComponent({
     longitude: -74.005974,
   };
 
+  // * gives us the map instance with the useMap hook
+  const map = useMap();
+
+
+  useEffect(() => {
+    if (!map) return;
+  
+    // Mark that user dragged
+    const handleDragEnd = () => {
+      hasDraggedRef.current = true;
+    };
+  
+    // Trigger reverse geocode only if dragged
+    const handleIdle = debounce(() => {
+      if (hasDraggedRef.current) {
+        const center = map.getCenter();
+        const lat = center.lat();
+        const lng = center.lng();
+  
+        console.log("---> Map Dragged <---");
+        reverseGeocode(lat, lng, "drag");
+        hasDraggedRef.current = false; // Reset after fetch
+      }
+    }, 600);
+  
+    const dragEndListener = map.addListener("dragend", handleDragEnd);
+    const idleListener = map.addListener("idle", handleIdle);
+  
+    return () => {
+      dragEndListener.remove();
+      idleListener.remove();
+    };
+  }, [map]);
+  
+  
+
+
   const MapHandler = ({ place, marker }) => {
-    const map = useMap();
+  
 
     useEffect(() => {
       if (!map || !place || !marker) return;
@@ -40,7 +80,18 @@ export default function MapComponent({
     return null;
   };
 
+  const isSamePlace = (a, b) =>
+    a.name === b.name &&
+    a.formattedAddress === b.formattedAddress &&
+    a.latitude === b.latitude &&
+    a.longitude === b.longitude;
+
+
+  
+  
+
   const reverseGeocode = async (latitude, longitude, mode = "nearby") => {
+    console.log("Reverse geocode triggered with mode:", mode);
     try {
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
@@ -52,6 +103,8 @@ export default function MapComponent({
         console.warn("Reverse geocoding failed or returned no results.");
         return;
       }
+
+      console.log("--->    <---");
     
       if (data.status === "OK") {
         const place = data.results[0];
@@ -71,13 +124,24 @@ export default function MapComponent({
         }
 
         const formattedAddress = [city, state, country].filter(Boolean).join(", ");
-
-        setSelectedPlace({
-          name: city,
-          formattedAddress,
-          latitude,
-          longitude,
+        // only update if it differs from the current selected place
+        setSelectedPlace(prev => {
+          const newPlace = {
+            name: city,
+            formattedAddress,
+            latitude,
+            longitude
+          };
+          if (isSamePlace(prev, newPlace)) {
+            console.log("No change in selectedPlace, skipping update");
+            return prev;
+          }
+          console.log("Updating selectedPlace:", newPlace);
+          return newPlace;
         });
+        
+        
+        
         // only update the user location if the mode is "nearby"
         if (mode === "nearby") {
         setUserLocation({ lat: latitude, lng: longitude });
@@ -98,14 +162,25 @@ export default function MapComponent({
   };
 
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => reverseGeocode(coords.latitude, coords.longitude),
-      (err) => {
-        console.error("Geolocation error:", err);
-        alert("Could not get your location. Please search manually.");
+    const fetchLocation = async () => {
+      try {
+        navigator.geolocation.getCurrentPosition(
+          async ({ coords }) => {
+            await reverseGeocode(coords.latitude, coords.longitude);
+          },
+          (err) => {
+            console.error("Geolocation error:", err);
+            alert("Could not get your location. Please search manually.");
+          }
+        );
+      } catch (err) {
+        console.error("Unexpected geolocation error:", err);
       }
-    );
+    };
+  
+    fetchLocation();
   }, []);
+  
 
   return (
     <div className="map-container">
@@ -117,21 +192,8 @@ export default function MapComponent({
               lat: selectedPlace.latitude,
               lng: selectedPlace.longitude,
             }}
-            defaultZoom={13}
-            mapId={import.meta.env.VITE_GOOGLE_MAPS_MAP_ID}
-            // ** events : idle - for detecting when the dragging is done
-            onIdle={
-              ({ latLng }) => {
-                const lat = latLng.lat();
-                const lng = latLng.lng();
-                if (hasDragged) {
-                  reverseGeocode(lat, lng, "drag");
-                  console.log("User drag detected:", lat, lng);
-                } else {
-                  setHasDragged(true); // skip first idle trigger
-                }
-              }
-            }
+            defaultZoom={14}
+            mapId={import.meta.env.VITE_GOOGLE_MAPS_MAP_ID}            
           >
             {/* 🔵 User’s Marker */}
             <AdvancedMarker
