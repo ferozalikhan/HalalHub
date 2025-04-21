@@ -12,8 +12,9 @@ exports.searchPlacesController = async (req, res) => {
     console.log("Category:", category);
     console.log("Page Token:", pageToken);
     console.groupEnd();
-  // default values 
-  const radius = 5000; // 5km
+  // default values  - 1500 meters
+  // const radius = 1500; // 1.5km // 0.9 miles
+  const radius = 5000; //  5km // 3.1 miles
   const rangeSize = 20;
   const fallbackCity = "New York"; // or pass from frontend
   const cat = categoryMap[category] || categoryMap.all;
