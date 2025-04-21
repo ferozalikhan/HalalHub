@@ -30,39 +30,73 @@ export default function MapComponent({
     longitude: -74.005974,
   };
 
+ const [mapState, setMapState] = useState({
+  zoom: 13,
+  center: null,
+  lastSearchCircle: null
+});
+
+  
+
   // * gives us the map instance with the useMap hook
   const map = useMap();
+
+  // useeffect to set the hasDraggedRef to false when the mood is set to "text"
+  useEffect(() => {
+    if (searchMode === "text") {
+      hasDraggedRef.current = false;
+      setMapState(prev => ({
+        ...prev,
+        zoom: 13,
+        lastSearchCircle: null,
+      }));
+    }
+  }, [searchMode]);
+
 
 
   useEffect(() => {
     if (!map) return;
   
-    // Mark that user dragged
-    const handleDragEnd = () => {
-      hasDraggedRef.current = true;
-    };
-  
-    // Trigger reverse geocode only if dragged
     const handleIdle = debounce(() => {
-      if (hasDraggedRef.current) {
-        const center = map.getCenter();
-        const lat = center.lat();
-        const lng = center.lng();
+      const center = map.getCenter();
+      const zoom = map.getZoom();
   
-        console.log("---> Map Dragged <---");
-        reverseGeocode(lat, lng, "drag");
-        hasDraggedRef.current = false; // Reset after fetch
+      if (zoom < 12) {
+        console.log("Too zoomed out to search");
+        return;
+      }
+  
+      if (!hasDraggedRef.current) {
+        hasDraggedRef.current = true; // Skip first idle
+        return;
+      }
+      const centerLatLng = {
+        lat: center.lat(),
+        lng: center.lng()
+      };
+      
+      if (!isInsidePreviouslyFetchedArea(centerLatLng, mapState.lastSearchCircle)) {
+        reverseGeocode(centerLatLng.lat, centerLatLng.lng, "drag");
+        setMapState(prev => ({
+          ...prev,
+          center: centerLatLng,
+          zoom,
+          lastSearchCircle: {
+            center: centerLatLng,
+            radius: 5000,
+          },
+        }));
+      }
+      else {
+        console.log("Already searched this area — skipping fetch.");
       }
     }, 600);
   
-    const dragEndListener = map.addListener("dragend", handleDragEnd);
-    const idleListener = map.addListener("idle", handleIdle);
+    const listener = map.addListener("idle", handleIdle);
+    return () => listener.remove();
+  }, [map, mapState.lastSearchCircle]);
   
-    return () => {
-      dragEndListener.remove();
-      idleListener.remove();
-    };
-  }, [map]);
   
   
 
@@ -86,6 +120,31 @@ export default function MapComponent({
     a.latitude === b.latitude &&
     a.longitude === b.longitude;
 
+
+    function calculateDistance(lat1, lng1, lat2, lng2) {
+      const toRad = (val) => (val * Math.PI) / 180;
+      const R = 6371e3;
+      const dLat = toRad(lat2 - lat1);
+      const dLng = toRad(lng2 - lng1);
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    
+    function isInsidePreviouslyFetchedArea(center, circle) {
+      if (!circle) return false;
+      const distance = calculateDistance(
+        center.lat,
+        center.lng,
+        circle.center.lat,
+        circle.center.lng
+      );
+      return distance <= circle.radius;
+    }
+    
+    
 
   
   
@@ -192,8 +251,9 @@ export default function MapComponent({
               lat: selectedPlace.latitude,
               lng: selectedPlace.longitude,
             }}
-            defaultZoom={14}
-            mapId={import.meta.env.VITE_GOOGLE_MAPS_MAP_ID}            
+            defaultZoom={mapState.zoom}
+            mapId={import.meta.env.VITE_GOOGLE_MAPS_MAP_ID}    
+            options={{ gestureHandling: "greedy" }} // to allow dragging     
           >
             {/* 🔵 User’s Marker */}
             <AdvancedMarker
