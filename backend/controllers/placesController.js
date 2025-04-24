@@ -12,8 +12,9 @@ exports.searchPlacesController = async (req, res) => {
     console.log("Category:", category);
     console.log("Page Token:", pageToken);
     console.groupEnd();
-  // default values 
-  const radius = 5000; // 5km
+  // default values  - 1500 meters
+  // const radius = 1500; // 1.5km // 0.9 miles
+  const radius = 5000; //  5km // 3.1 miles
   const rangeSize = 20;
   const fallbackCity = "New York"; // or pass from frontend
   const cat = categoryMap[category] || categoryMap.all;
@@ -106,25 +107,32 @@ const headers = {
   "X-Goog-FieldMask": fieldMask,
 };
 
-  try {
-    const response = await axios.post(apiUrl, requestBody, { headers });
-    // ! Debug logs
-    // use a differnt group for better readability
-    console.group("✅  Google Places Response");
-    console.log("Status:", response.status);
-    // log the length of the data array
-    console.log("Data:", response.data.places.length || 0);
-    console.log("Next Page Token:", response.data.nextPageToken);
-    console.groupEnd();
-    res.status(200).json({
-      places: response.data.places || [],
-      nextPageToken: response.data.nextPageToken || null,
-    });
-  } catch (error) {
-    console.error("❌ Places API error:", error.response?.data || error.message);
-    res.status(500).json({
-      message: "Error fetching results from Google Places API",
-      error: error.response?.data || error.message,
-    });
+try {
+  const response = await axios.post(apiUrl, requestBody, { headers });
+
+  // Logging
+  console.group("✅  Google Places Response");
+  console.log("Status:", response.status);
+
+  if (Array.isArray(response.data.places)) {
+    console.log("Places found:", response.data.places.length);
+  } else {
+    console.warn("⚠️ No valid places array returned:", response.data);
   }
-};
+
+  console.log("Next Page Token:", response.data.nextPageToken);
+  console.groupEnd();
+
+  res.status(200).json({
+    places: Array.isArray(response.data.places) ? response.data.places : [],
+    nextPageToken: response.data.nextPageToken || null,
+  });
+
+} catch (error) {
+  console.error("❌ Places API error:", error.response?.data || error.message);
+  res.status(500).json({
+    message: "Error fetching results from Google Places API",
+    error: error.response?.data || error.message,
+  });
+}
+}

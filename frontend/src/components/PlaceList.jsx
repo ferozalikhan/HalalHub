@@ -96,7 +96,9 @@ import {
         {places.map((place, index) => {
           const priceSymbols = place.priceLevel ? "$".repeat(place.priceLevel) : "$$";
           const isOpen = place.currentOpeningHours?.openNow;
-          const imageUrl = place.photos?.[0] ? getPhotoUrl(place.photos[0]) : null;
+          // TODO: replace with actual image url later | this is good for testing | cost effective
+          // const imageUrl = place.photos?.[0]?.photoReference ? getPhotoUrl(place.photos[0]) : null;
+          const imageUrl = 'https://via.placeholder.com/400x200?text=No+Image+Available';
           const distance = userLocation && place.location ? calculateDistance(userLocation.lat, userLocation.lng, place.location.latitude, place.location.longitude) : null;
           const location = extractLocation(place.formattedAddress);
           const { icon, label } = getPlaceTypeInfo(place.primaryType, place.types);

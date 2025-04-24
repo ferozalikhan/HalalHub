@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   APIProvider,
   Map,
@@ -7,17 +7,22 @@ import {
   useAdvancedMarkerRef,
   useMap
 } from "@vis.gl/react-google-maps";
+import { debounce } from "lodash";
+import { CodeSquare } from "lucide-react";
+
+
 
 export default function MapComponent({
   userLocation,
   setUserLocation,
   selectedPlace,
   setSelectedPlace,
+  searchMode,
   setSearchMode,
   places = [] // <-- Accept array of places
 }) {
   const [markerRef, marker] = useAdvancedMarkerRef();
-
+  const hasDraggedRef = useRef(false);
   const defaultLocation = {
     name: "New York City",
     formattedAddress: "New York City, NY, USA",
@@ -25,8 +30,79 @@ export default function MapComponent({
     longitude: -74.005974,
   };
 
+ const [mapState, setMapState] = useState({
+  zoom: 13,
+  center: null,
+  lastSearchCircle: null
+});
+
+  
+
+  // * gives us the map instance with the useMap hook
+  const map = useMap();
+
+  // useeffect to set the hasDraggedRef to false when the mood is set to "text"
+  useEffect(() => {
+    if (searchMode === "text") {
+      hasDraggedRef.current = false;
+      setMapState(prev => ({
+        ...prev,
+        zoom: 13,
+        lastSearchCircle: null,
+      }));
+    }
+  }, [searchMode]);
+
+
+
+  useEffect(() => {
+    if (!map) return;
+  
+    const handleIdle = debounce(() => {
+      const center = map.getCenter();
+      const zoom = map.getZoom();
+  
+      if (zoom < 12) {
+        console.log("Too zoomed out to search");
+        return;
+      }
+  
+      if (!hasDraggedRef.current) {
+        hasDraggedRef.current = true; // Skip first idle
+        return;
+      }
+      const centerLatLng = {
+        lat: center.lat(),
+        lng: center.lng()
+      };
+      
+      if (!isInsidePreviouslyFetchedArea(centerLatLng, mapState.lastSearchCircle)) {
+        reverseGeocode(centerLatLng.lat, centerLatLng.lng, "drag");
+        setMapState(prev => ({
+          ...prev,
+          center: centerLatLng,
+          zoom,
+          lastSearchCircle: {
+            center: centerLatLng,
+            radius: 5000,
+          },
+        }));
+      }
+      else {
+        console.log("Already searched this area — skipping fetch.");
+      }
+    }, 600);
+  
+    const listener = map.addListener("idle", handleIdle);
+    return () => listener.remove();
+  }, [map, mapState.lastSearchCircle]);
+  
+  
+  
+
+
   const MapHandler = ({ place, marker }) => {
-    const map = useMap();
+  
 
     useEffect(() => {
       if (!map || !place || !marker) return;
@@ -38,7 +114,43 @@ export default function MapComponent({
     return null;
   };
 
-  const reverseGeocode = async (latitude, longitude) => {
+  const isSamePlace = (a, b) =>
+    a.name === b.name &&
+    a.formattedAddress === b.formattedAddress &&
+    a.latitude === b.latitude &&
+    a.longitude === b.longitude;
+
+
+    function calculateDistance(lat1, lng1, lat2, lng2) {
+      const toRad = (val) => (val * Math.PI) / 180;
+      const R = 6371e3;
+      const dLat = toRad(lat2 - lat1);
+      const dLng = toRad(lng2 - lng1);
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    
+    function isInsidePreviouslyFetchedArea(center, circle) {
+      if (!circle) return false;
+      const distance = calculateDistance(
+        center.lat,
+        center.lng,
+        circle.center.lat,
+        circle.center.lng
+      );
+      return distance <= circle.radius;
+    }
+    
+    
+
+  
+  
+
+  const reverseGeocode = async (latitude, longitude, mode = "nearby") => {
+    console.log("Reverse geocode triggered with mode:", mode);
     try {
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
@@ -50,6 +162,8 @@ export default function MapComponent({
         console.warn("Reverse geocoding failed or returned no results.");
         return;
       }
+
+      console.log("--->    <---");
     
       if (data.status === "OK") {
         const place = data.results[0];
@@ -69,17 +183,37 @@ export default function MapComponent({
         }
 
         const formattedAddress = [city, state, country].filter(Boolean).join(", ");
-        setUserLocation({ lat: latitude, lng: longitude });
-        setSelectedPlace({
-          name: city,
-          formattedAddress,
-          latitude,
-          longitude,
+        // only update if it differs from the current selected place
+        setSelectedPlace(prev => {
+          const newPlace = {
+            name: city,
+            formattedAddress,
+            latitude,
+            longitude
+          };
+          if (isSamePlace(prev, newPlace)) {
+            console.log("No change in selectedPlace, skipping update");
+            return prev;
+          }
+          console.log("Updating selectedPlace:", newPlace);
+          return newPlace;
         });
+        
+        
+        
+        // only update the user location if the mode is "nearby"
+        if (mode === "nearby") {
+        setUserLocation({ lat: latitude, lng: longitude });
         setSearchMode("nearby");
+        }
+        else if (mode === "drag")
+        {
+          setSearchMode("drag");
+        }
       } else {
         setSelectedPlace(defaultLocation);
       }
+      
     } catch (error) {
       console.error("Reverse geocoding error:", error);
       setSelectedPlace(defaultLocation);
@@ -87,14 +221,25 @@ export default function MapComponent({
   };
 
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => reverseGeocode(coords.latitude, coords.longitude),
-      (err) => {
-        console.error("Geolocation error:", err);
-        alert("Could not get your location. Please search manually.");
+    const fetchLocation = async () => {
+      try {
+        navigator.geolocation.getCurrentPosition(
+          async ({ coords }) => {
+            await reverseGeocode(coords.latitude, coords.longitude);
+          },
+          (err) => {
+            console.error("Geolocation error:", err);
+            alert("Could not get your location. Please search manually.");
+          }
+        );
+      } catch (err) {
+        console.error("Unexpected geolocation error:", err);
       }
-    );
+    };
+  
+    fetchLocation();
   }, []);
+  
 
   return (
     <div className="map-container">
@@ -106,8 +251,9 @@ export default function MapComponent({
               lat: selectedPlace.latitude,
               lng: selectedPlace.longitude,
             }}
-            defaultZoom={13}
-            mapId={import.meta.env.VITE_GOOGLE_MAPS_MAP_ID}
+            defaultZoom={mapState.zoom}
+            mapId={import.meta.env.VITE_GOOGLE_MAPS_MAP_ID}    
+            options={{ gestureHandling: "greedy" }} // to allow dragging     
           >
             {/* 🔵 User’s Marker */}
             <AdvancedMarker

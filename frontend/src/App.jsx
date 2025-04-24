@@ -33,8 +33,11 @@ function App() {
   } = usePlacesSearch({ selectedPlace, searchMode, category });
 
   // !! Debugging: Log the places
-   console.log ("inside App");
-  console.log("hasMore:", hasMore);
+  useEffect(() => {
+    console.log("📍 inside App");
+    console.log("hasMore:", hasMore);
+  }, [hasMore]);
+  
 
   // load more results 
   // const [nextPageToken, setNextPageToken] = useState(null);
