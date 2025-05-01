@@ -29,10 +29,19 @@ export default function Home(
   }
 ) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const hasDraggedRef = useRef(false);
+    // State to manage all filter selections in the sidebar
+    const [selectedFilters, setSelectedFilters] = useState({
+      cuisine: [],
+      price: [],
+      rating: null,
+      features: [],
+      certification: [],
+      distance: 5
+    });
   
-    const hasInteractedRef = useRef(false);        // avoid first idle event
-    const isDraggingAllowedRef = useRef(true);     // only true after nearby/text
+  const hasDraggedRef = useRef(false);
+  const hasInteractedRef = useRef(false);        // avoid first idle event
+  const isDraggingAllowedRef = useRef(true);     // only true after nearby/text
  
 
   const toggleSidebar = () => {
@@ -58,7 +67,12 @@ export default function Home(
 
       <main className="main-container">
 
-        <SideBar toggleSidebar={sidebarOpen} manageSidebar={toggleSidebar} />
+        <SideBar 
+          toggleSidebar={sidebarOpen} 
+          manageSidebar={toggleSidebar} 
+          selectedFilters={selectedFilters}
+          setSelectedFilters={setSelectedFilters}
+        />
         
          <div className={`map-section ${sidebarOpen ? 'with-sidebar' : ''}`}>
                     <div className="map-header">
