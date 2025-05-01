@@ -1,56 +1,51 @@
 const axios = require("axios");
-const { fieldMask,categoryMap} = require("../constants/googleFieldMask");
+const { fieldMask, categoryMap } = require("../constants/googleFieldMask");
 
 exports.searchPlacesController = async (req, res) => {
-  // Extract query parameters
-  const { mode = "text", query, lat, lng, category, pageToken } = req.query;
-    //! Debug logs
-    console.group("📦 Original Request Params");
-    console.log("Mode:", mode);
-    console.log("Query:", query);
-    console.log("Lat/Lng:", lat, lng);
-    console.log("Category:", category);
-    console.log("Page Token:", pageToken);
-    console.groupEnd();
-  // default values  - 1500 meters
-  // const radius = 1500; // 1.5km // 0.9 miles
-  const radius = 5000; //  5km // 3.1 miles
+  const { mode = "text", query, lat, lng, category = [], pageToken } = req.query;
+
+  console.group("📦 Original Request Params");
+  console.log("Mode:", mode);
+  console.log("Query:", query);
+  console.log("Lat/Lng:", lat, lng);
+  console.log("Category:", category);
+  console.log("Page Token:", pageToken);
+  console.groupEnd();
+
+  const radius = 5000;
   const rangeSize = 20;
-  const fallbackCity = "New York"; // or pass from frontend
-  const cat = categoryMap[category] || categoryMap.all;
-  const finalQuery =
-  query && query.trim()
-    ? `${cat.keyword} in ${query.trim()}`
-    : cat.keyword;
+  const fallbackCity = "New York";
+
+  // const categories = Array.isArray(category) ? category : [category];
+
+  // // Pick first category OR fallback to 'all'
+  // const pickedCategory = categoryMap[categories[0]] || categoryMap.all;
+  // ** NOTE: This is a fallback to 'all' if no category is provided
+  const pickedCategory = categoryMap.all;
+  const searchQuery = query?.trim()
+    ? `${pickedCategory.keyword} in ${query.trim()}`
+    : pickedCategory.keyword;
 
   let requestBody = {};
   let apiUrl = "";
-
-  // ! Debug logs
-  console.group("📦 Google Places Request");
-  console.log("category:", cat);
-  console.log("finalQuery:", finalQuery);
-
-
-  // API key from environment variables
-  const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
-  const TEXT_SEARCH_URL = "https://places.googleapis.com/v1/places:searchText";
-  //const NEARBY_SEARCH_URL = "https://places.googleapis.com/v1/places:searchNearby";
-
-
-  // Validate lat and lng
   const latitude = parseFloat(lat);
   const longitude = parseFloat(lng);
-  
-  
+
+  const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+  const TEXT_SEARCH_URL = "https://places.googleapis.com/v1/places:searchText";
+
+  console.group("📦 Google Places Request Setup");
+  console.log("Picked category:", pickedCategory);
+  console.log("Search Query:", searchQuery);
+  console.groupEnd();
+
   if (mode === "text") {
     apiUrl = TEXT_SEARCH_URL;
     requestBody = {
-        textQuery: finalQuery,
-        ...(cat.type && { includedType: cat.type }),
+      textQuery: searchQuery,
       pageSize: rangeSize,
-      ...(pageToken && { pageToken }),
       languageCode: "en",
+      ...(pageToken && { pageToken }),
       ...(lat && lng && {
         locationBias: {
           circle: {
@@ -59,80 +54,61 @@ exports.searchPlacesController = async (req, res) => {
           },
         },
       }),
+
     };
-
   } else if (mode === "nearby" || mode === "drag") {
-
     if (isNaN(latitude) || isNaN(longitude)) {
       return res.status(400).json({ error: "Invalid lat/lng values" });
     }
-    
-    
     apiUrl = TEXT_SEARCH_URL;
     requestBody = {
-      textQuery: cat.keyword,
-      ...(cat.type && { includedType: cat.type }), // This is optional, but boosts specificity!
+      textQuery: pickedCategory.keyword,
       pageSize: rangeSize,
       languageCode: "en",
       ...(pageToken && { pageToken }),
       locationRestriction: {
-        // 0.03 offset ≈ 3km box (not actual radius)
         rectangle: {
-          low: {
-            latitude: latitude - 0.03,
-            longitude: longitude - 0.03
-          },
-          high: {
-            latitude: latitude + 0.03,
-            longitude: longitude + 0.03
-          }
-        }
+          low: { latitude: latitude - 0.03, longitude: longitude - 0.03 },
+          high: { latitude: latitude + 0.03, longitude: longitude + 0.03 },
+        },
       },
-
     };
   } else if (mode === "default") {
     apiUrl = TEXT_SEARCH_URL;
     requestBody = {
-    textQuery: `${cat.keyword} in ${fallbackCity}`,
+      textQuery: `halal food in ${fallbackCity}`,
       pageSize: rangeSize,
-      languageCode: "en"
+      languageCode: "en",
     };
   } else {
     return res.status(400).json({ error: "Invalid mode" });
   }
 
-const headers = {
-  "Content-Type": "application/json",
-  "X-Goog-Api-Key": GOOGLE_API_KEY,
-  "X-Goog-FieldMask": fieldMask,
-};
+  const headers = {
+    "Content-Type": "application/json",
+    "X-Goog-Api-Key": GOOGLE_API_KEY,
+    "X-Goog-FieldMask": fieldMask,
+  };
 
-try {
-  const response = await axios.post(apiUrl, requestBody, { headers });
+  try {
+    const response = await axios.post(apiUrl, requestBody, { headers });
 
-  // Logging
-  console.group("✅  Google Places Response");
-  console.log("Status:", response.status);
+    console.group("✅ Google Places API Response");
+    console.log("Status:", response.status);
+    console.log("Places found:", response.data.places?.length || 0);
+    console.log("Next Page Token:", response.data.nextPageToken);
+    console.groupEnd();
 
-  if (Array.isArray(response.data.places)) {
-    console.log("Places found:", response.data.places.length);
-  } else {
-    console.warn("⚠️ No valid places array returned:", response.data);
+    res.status(200).json({
+      places: Array.isArray(response.data.places) ? response.data.places : [],
+      nextPageToken: response.data.nextPageToken || null,
+    });
+
+  } catch (error) {
+    console.error("❌ Places API error:", error.response?.data || error.message);
+    res.status(500).json({
+      message: "Error fetching results from Google Places API",
+      error: error.response?.data || error.message,
+    });
   }
-
-  console.log("Next Page Token:", response.data.nextPageToken);
-  console.groupEnd();
-
-  res.status(200).json({
-    places: Array.isArray(response.data.places) ? response.data.places : [],
-    nextPageToken: response.data.nextPageToken || null,
-  });
-
-} catch (error) {
-  console.error("❌ Places API error:", error.response?.data || error.message);
-  res.status(500).json({
-    message: "Error fetching results from Google Places API",
-    error: error.response?.data || error.message,
-  });
-}
-}
+};

@@ -19,10 +19,12 @@ export default function MapComponent({
   setSelectedPlace,
   searchMode,
   setSearchMode,
+  hasDraggedRef,
+  hasInteractedRef,
+  isDraggingAllowedRef,
   places = [] // <-- Accept array of places
 }) {
   const [markerRef, marker] = useAdvancedMarkerRef();
-  const hasDraggedRef = useRef(false);
   const defaultLocation = {
     name: "New York City",
     formattedAddress: "New York City, NY, USA",
@@ -36,28 +38,45 @@ export default function MapComponent({
   lastSearchCircle: null
 });
 
+const userDidManualDragRef = useRef(false);
+
+
+   // only true after nearby/text
+
+
   
 
   // * gives us the map instance with the useMap hook
   const map = useMap();
 
-  // useeffect to set the hasDraggedRef to false when the mood is set to "text"
-  useEffect(() => {
-    if (searchMode === "text") {
-      hasDraggedRef.current = false;
-      setMapState(prev => ({
-        ...prev,
-        zoom: 13,
-        lastSearchCircle: null,
-      }));
-    }
-  }, [searchMode]);
+  // // useeffect to set the hasDraggedRef to false when the mood is set to "text"
+  // useEffect(() => {
+  //   if (searchMode === "text") {
+  //     hasDraggedRef.current = false;
+  //     setMapState(prev => ({
+  //       ...prev,
+  //       zoom: 13,
+  //       lastSearchCircle: null,
+  //     }));
+  //   }
+  // }, [searchMode]);
 
-
-
+  
   useEffect(() => {
     if (!map) return;
   
+    const dragStartListener = map.addListener('dragstart', () => {
+      userDidManualDragRef.current = true;
+    });
+  
+    return () => dragStartListener.remove();
+  }, [map]);
+  
+
+
+
+  useEffect(() => {
+    if (!map) return;  
     const handleIdle = debounce(() => {
       const center = map.getCenter();
       const zoom = map.getZoom();
@@ -66,18 +85,31 @@ export default function MapComponent({
         console.log("Too zoomed out to search");
         return;
       }
-  
-      if (!hasDraggedRef.current) {
-        hasDraggedRef.current = true; // Skip first idle
+
+      if (!hasInteractedRef.current) {
+        hasInteractedRef.current = true; // First interaction after mode change
         return;
       }
+      
+      if (!isDraggingAllowedRef.current) {
+        console.log("🚫 Drag ignored — user interaction not allowed (e.g., after text search)");
+        return;
+      }
+      
+      
       const centerLatLng = {
         lat: center.lat(),
         lng: center.lng()
       };
       
       if (!isInsidePreviouslyFetchedArea(centerLatLng, mapState.lastSearchCircle)) {
-        reverseGeocode(centerLatLng.lat, centerLatLng.lng, "drag");
+        if (userDidManualDragRef.current) {
+          reverseGeocode(centerLatLng.lat, centerLatLng.lng, "drag");
+          userDidManualDragRef.current = false; // reset
+        } else {
+          console.log("👋 Idle but not a manual drag — skipping reverseGeocode");
+        }
+        
         setMapState(prev => ({
           ...prev,
           center: centerLatLng,
@@ -202,14 +234,26 @@ export default function MapComponent({
         
         
         // only update the user location if the mode is "nearby"
-        if (mode === "nearby") {
-        setUserLocation({ lat: latitude, lng: longitude });
-        setSearchMode("nearby");
-        }
-        else if (mode === "drag")
-        {
+        // if (mode === "nearby") {
+        // setUserLocation({ lat: latitude, lng: longitude });
+        // setSearchMode("nearby");
+        // }
+        // else if (mode === "drag")
+        // {
+        //   setSearchMode("drag");
+        // }
+        if (mode === "text") {
+          setSearchMode("text");
+          isDraggingAllowedRef.current = true;
+          hasInteractedRef.current = false;
+        } else if (mode === "drag") {
           setSearchMode("drag");
+        } else {
+          setSearchMode("nearby");
+          isDraggingAllowedRef.current = true;
+          hasInteractedRef.current = false;
         }
+        
       } else {
         setSelectedPlace(defaultLocation);
       }

@@ -33,7 +33,7 @@ import {
       'food': { icon: <FaUtensils />, label: 'Food Place' },
       'meal_takeaway': { icon: <FaShoppingBag />, label: 'Takeaway' },
       'meal_delivery': { icon: <FaMotorcycle />, label: 'Delivery' },
-      'grocery_or_supermarket': { icon: <FaShoppingBag />, label: 'Grocery' },
+      'grocery_store': { icon: <FaShoppingBag />, label: 'Grocery' },
       'supermarket': { icon: <FaShoppingBag />, label: 'Supermarket' },
       'store': { icon: <FaShoppingBag />, label: 'Store' },
       'default': { icon: <FaUtensils />, label: 'Place' }
@@ -71,21 +71,15 @@ import {
     const formatTime = (t) => t ? `${(t.hour % 12 || 12)}:${(t.minute || '00').toString().padStart(2, '0')} ${t.hour >= 12 ? 'PM' : 'AM'}` : '';
     return `${formatTime(todayPeriod.open)} - ${formatTime(todayPeriod.close)}`;
   };
+
+  function getNeutralFallbackSummary(place, label) {
+    const name = place.displayName?.text || "This place";
+    const city = extractLocation(place.formattedAddress);
+    return `${name} is a ${label.toLowerCase()} located in ${city}.`;
+  }
   
-  const generatePlaceholderSummary = (place, typeInfo) => {
-    const { label } = typeInfo;
-    const samples = [
-      `A popular halal ${label.toLowerCase()} offering a variety of delicious options.`,
-      `Discover authentic halal cuisine at this local ${label.toLowerCase()}.`,
-      `Family-friendly halal ${label.toLowerCase()} with a welcoming atmosphere.`
-    ];
-    let summary = samples[Math.floor(Math.random() * samples.length)];
-    if (place.servesVegetarianFood) summary += ' Vegetarian options available.';
-    if (place.dineIn && place.takeout) summary += ' Enjoy dining in or taking your food to go.';
-    else if (place.dineIn) summary += ' Comfortable dining experience.';
-    else if (place.takeout) summary += ' Perfect for grab-and-go meals.';
-    return summary;
-  };
+  
+  
   
   export default function PlaceList({ places, userLocation, loading,}) {
     if (loading) return <div className="loading-container"><div className="loading-spinner"></div><p>Discovering halal places near you...</p></div>;
@@ -98,13 +92,19 @@ import {
           const isOpen = place.currentOpeningHours?.openNow;
           // TODO: replace with actual image url later | this is good for testing | cost effective
           // const imageUrl = place.photos?.[0]?.photoReference ? getPhotoUrl(place.photos[0]) : null;
-          const imageUrl = 'https://via.placeholder.com/400x200?text=No+Image+Available';
+          const imageUrl = 'https://placehold.co/400x200?text=Halal+Restaurant&font=roboto';
+
           const distance = userLocation && place.location ? calculateDistance(userLocation.lat, userLocation.lng, place.location.latitude, place.location.longitude) : null;
           const location = extractLocation(place.formattedAddress);
           const { icon, label } = getPlaceTypeInfo(place.primaryType, place.types);
           const halalStatus = getHalalVerification(place, index);
           const todayHours = formatOpeningHours(place.regularOpeningHours);
-          const summary = place.editorialSummary?.text || generatePlaceholderSummary(place, { label });
+          const summary =
+          place.generativeSummary?.overview?.text ||
+          place.editorialSummary?.text ||
+          getNeutralFallbackSummary(place, label);
+        
+
   
           return (
             <Link key={index} to={`/place/${place.id || index}`} className="place-card" aria-label={`View details for ${place.displayName?.text}`}>
@@ -145,7 +145,7 @@ import {
                 </div>
   
                 {todayHours && <div className="hours-info"><FaClock className="hours-icon" /><span className="hours-text">{todayHours}</span></div>}
-                <div className="place-summary truncate-2">{summary}</div>
+                <div className="place-summary  truncate-2">{summary}</div>
   
                 <div className="contact-actions">
                   {place.nationalPhoneNumber && <a href={`tel:${place.nationalPhoneNumber}`} className="action-btn phone" onClick={(e) => e.stopPropagation()}><FaPhoneAlt /><span>Call</span></a>}

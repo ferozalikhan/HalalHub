@@ -8,8 +8,8 @@ import '../styles/Navbar.css';
  const getCategoryLabel = (category) => {
   const labels = {
     restaurants: 'Halal Restaurants',
-    foodtrucks: 'Food Trucks',
-    groceries: 'Grocery Stores',
+    street_food: 'Food Trucks',
+    grocery_store: 'Grocery Stores',
     // Add more categories here
   };
   return labels[category] || category;
@@ -22,10 +22,13 @@ export default function Navbar(
       setSelectedPlace,
       searchMode,
        setSearchMode,
+    hasDraggedRef,
+    hasInteractedRef,
+    isDraggingAllowedRef,
+    selectedCategories,
+    setSelectedCategories,
        } )  {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  
+  const [dropdownOpen, setDropdownOpen] = useState(false);  
   const [placeAutocomplete, setPlaceAutocomplete] = useState(null);
   // set manual input to the selected place's formatted address
   const [manualInput, setManualInput] = useState("");
@@ -135,24 +138,37 @@ export default function Navbar(
     });
     setManualInput(formattedAddress);
     // first check if search mode is not equal to "text"
-    if (searchMode !== "text") {
-      setSearchMode("text");
-    }
+    setSearchMode("text");              // ✅ NOW it's safe to call
+    isDraggingAllowedRef.current = true;
+    hasInteractedRef.current = false;
   });
   }, [placeAutocomplete]);
+
+  // useEffect to log selected categories
+  useEffect(() => {
+    // !! Debugging: Log the selected categories
+    console.log("Selected categories:", selectedCategories);
+  }, [selectedCategories]);
   
   // Function to toggle a category selection
   const toggleCategory = (category) => {
     if (selectedCategories.includes(category)) {
+      // !! Debugging: Log the category being toggled
+      console.log("Toggling category:", category);
       setSelectedCategories(selectedCategories.filter(c => c !== category));
+
     } else {
-      setSelectedCategories([...selectedCategories, category]);
+      // !! Debugging: Log the category being toggled
+      console.log("Toggling category inside else:", category);
+      setSelectedCategories((prev) => [...prev, category]);
     }
   };
   
   
   // Remove a selected category
   const removeCategory = (category) => {
+    // !! Debugging: Log the category being removed
+    console.log("Removing category:", category);
     setSelectedCategories(selectedCategories.filter(c => c !== category));
   };
 
@@ -264,7 +280,7 @@ export default function Navbar(
                 
                 {dropdownOpen && (
                   <div className="dropdown-options">
-                    {['restaurants', 'foodtrucks', 'groceries'].map((category) => (
+                    {['restaurants','street_food' ,'grocery_store'].map((category) => (
                       <div 
                         key={category}
                         className={`option ${selectedCategories.includes(category) ? 'selected' : ''}`} 

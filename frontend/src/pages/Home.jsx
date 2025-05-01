@@ -7,7 +7,7 @@ import "../App.css";
 import { FaFilter, FaTimes, FaStar, FaUtensils, FaTruck, FaStore } from 'react-icons/fa';
 import PlaceList from "../components/PlaceList.jsx";
 import axios from "axios";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 
 export default function Home(
@@ -19,13 +19,20 @@ export default function Home(
   places,
   searchMode,
   setSearchMode,
+
   fetchNextPage,
   hasMore,
   loading,
   loadingMore,
+  selectedCategories,
+  setSelectedCategories,
   }
 ) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const hasDraggedRef = useRef(false);
+  
+    const hasInteractedRef = useRef(false);        // avoid first idle event
+    const isDraggingAllowedRef = useRef(true);     // only true after nearby/text
  
 
   const toggleSidebar = () => {
@@ -35,7 +42,18 @@ export default function Home(
   return (
     <div className="home-page">
       {/* Pass toggleSidebarHandler to Navbar */}
-      <Navbar toggleSidebarHandler={toggleSidebar} selectedPlace={selectedPlace} setSelectedPlace={setSelectedPlace} setSearchMode= {setSearchMode}/>
+      <Navbar 
+        toggleSidebarHandler={toggleSidebar} 
+        selectedPlace={selectedPlace} 
+        setSelectedPlace={setSelectedPlace} 
+        searchMode={searchMode}
+        setSearchMode= {setSearchMode}
+        hasDraggedRef={hasDraggedRef}
+        hasInteractedRef={hasInteractedRef}
+        isDraggingAllowedRef={isDraggingAllowedRef}
+        selectedCategories={selectedCategories}
+        setSelectedCategories={setSelectedCategories}
+      />
 
 
       <main className="main-container">
@@ -58,6 +76,9 @@ export default function Home(
                         setSelectedPlace={setSelectedPlace}
                         searchMode={searchMode}
                         setSearchMode={setSearchMode}
+                        hasDraggedRef={hasDraggedRef}
+                        hasInteractedRef={hasInteractedRef}
+                        isDraggingAllowedRef={isDraggingAllowedRef}
                         places={places}
                          />
                         <div className="map-overlay">

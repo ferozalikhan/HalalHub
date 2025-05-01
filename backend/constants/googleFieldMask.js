@@ -3,37 +3,13 @@
 // constants/categoryMap.js
 
 const categoryMap = {
-    restaurant: {
-      label: "Restaurants",
-      keyword: "halal restaurant",
-      type: "restaurant",
-      icon: "FaUtensils"
-    },
-    grocery: {
-      label: "Grocery Stores",
-      keyword: "halal grocery",
-      type: "grocery_or_supermarket",
-      icon: "FaStore"
-    },
-    street_food: {
-      label: "Street Food",
-      keyword: "halal street food",
-      type: "meal_takeaway",
-      icon: "FaTruck"
-    },
-    cafe: {
-      label: "Cafes & Desserts",
-      keyword: "halal cafe",
-      type: "cafe",
-      icon: "FaCoffee"
-    },
-    all: {
-        label: "All Categories",
-        keyword: "halal food",
-        type: null,
-        icon: "FaGlobe"
-      },
-  };
+  restaurants: { label: "Restaurants", keyword: "halal restaurant", type: "restaurant" },
+  grocery_store: { label: "Grocery Stores", keyword: "halal grocery", type: "grocery_store" },
+  street_food: { label: "Street Food", keyword: "halal food truck", type: "meal_takeaway" },
+  cafe: { label: "Cafes & Desserts", keyword: "halal cafe", type: "cafe" },
+  all: { label: "All", keyword: "halal food", type: null }
+};
+
   
 
   
@@ -43,6 +19,7 @@ const basicFields = [
     "places.formattedAddress",
     "places.location.latitude",
     "places.location.longitude",
+    "places.primaryType",
     "places.types"
   ];
   
@@ -52,6 +29,7 @@ const basicFields = [
     "places.priceLevel",
     "places.photos",
     "places.websiteUri",
+    "places.nationalPhoneNumber",
     "places.currentOpeningHours.openNow"
   ];
   
@@ -64,6 +42,7 @@ const basicFields = [
     "places.delivery",
     "places.servesVegetarianFood",
     "nextPageToken",
+    "places.generativeSummary"
   ];
   
   // Final combined field mask string

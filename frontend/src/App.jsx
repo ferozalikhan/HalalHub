@@ -22,7 +22,7 @@ function App() {
   // mode can be "nearby" or "text" or "drag"
   const [searchMode, SetSearchMode] = useState("default");
   // const [places, setPlaces] = useState([]);
-  const [category, setCategory] = useState("all"); // e.g., "restaurants"
+  const [selectedCategories, setSelectedCategories] = useState([]);
 
   const {
     places,
@@ -30,7 +30,7 @@ function App() {
     loadingMore,
     fetchNextPage,
     hasMore
-  } = usePlacesSearch({ selectedPlace, searchMode, category });
+  } = usePlacesSearch({ selectedPlace, searchMode, category: selectedCategories });
 
   // !! Debugging: Log the places
   useEffect(() => {
@@ -93,12 +93,20 @@ function App() {
       <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
         <Routes>
           <Route path="/" element={
-            <Home userLocation = {userLocation} setUserLocation = {setUserLocation} selectedPlace = {selectedPlace} setSelectedPlace={setSelectedPlace} places={places} setSearchMode = {SetSearchMode} 
-            searchMode = {searchMode}
-            fetchNextPage = {fetchNextPage}
-            hasMore = {hasMore}
-            loading={loading} 
-            loadingMore={loadingMore}
+            <Home 
+              userLocation = {userLocation} 
+              setUserLocation = {setUserLocation} 
+              selectedPlace = {selectedPlace}
+              setSelectedPlace={setSelectedPlace}
+              selectedCategories={selectedCategories}
+              setSelectedCategories={setSelectedCategories}
+              places={places} 
+              setSearchMode = {SetSearchMode} 
+              searchMode = {searchMode}
+              fetchNextPage = {fetchNextPage}
+              hasMore = {hasMore}
+              loading={loading} 
+              loadingMore={loadingMore}
           />
           } />
           {/* only make thise route available when the place is selected */}
