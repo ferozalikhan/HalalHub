@@ -252,6 +252,7 @@ const userDidManualDragRef = useRef(false);
           setSearchMode("nearby");
           isDraggingAllowedRef.current = true;
           hasInteractedRef.current = false;
+          setUserLocation({ lat: latitude, lng: longitude });
         }
         
       } else {
