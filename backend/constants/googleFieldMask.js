@@ -30,7 +30,8 @@ const basicFields = [
     "places.photos",
     "places.websiteUri",
     "places.nationalPhoneNumber",
-    "places.currentOpeningHours.openNow"
+    "places.currentOpeningHours.openNow",
+    "places.regularOpeningHours",
   ];
   
   const extraFields = [

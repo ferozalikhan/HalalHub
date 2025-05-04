@@ -62,12 +62,11 @@ function applyFrontendFilters(places, filters, searchMode, userLocation) {
     const delivery = place.delivery;
     const dineIn = place.dineIn;
   
-   
-    
-
     // // !! Debugging: Log the place being filtered
     console.log("🚩 Filtering Place:", place.displayName.text);
     console.log("🚩 Place Primary Type:", place.primaryType);
+    console.log("🚩 Place opening Hours:", place.currentOpeningHours);
+    console.log("🚩 Place regular Hours:", place.regularOpeningHours);
     // console.log("🚩 Place Price:", placePrice);
     // console.log("🚩 Place Rating:", placeRating);
     // console.log("🚩 Open Now:", openNow);
@@ -160,6 +159,7 @@ export default function usePlacesSearch({ selectedPlace, userLocation, searchMod
 
 
   const fetchPlaces = async (isNextPage = false) => {
+    
     if (!selectedPlace?.latitude || !selectedPlace?.longitude) return;
 
     try {
@@ -215,6 +215,7 @@ useEffect(() => {
     userLocation
   );
   setFilteredPlaces(finalFiltered);
+
 }, [rawPlaces, category, selectedFilters, searchMode, userLocation]);
 
 useEffect(() => {

@@ -63,78 +63,135 @@ export default function MapComponent({
       lng <= bounds.east
     );
   }
-
+  const handleIdleRef = useRef();
 
   useEffect(() => {
-    
-    console.log("🚩------------------ HandleIdle UseEffect -----------------🚩");
-    if (!map) return;  
-    const handleIdle = debounce(() => {
+    if (!map) return;
+  
+    handleIdleRef.current = debounce(() => {
       const center = map.getCenter();
       const zoom = map.getZoom();
   
       if (zoom < 12) {
-        // pop up a message to the user
-        // TODO: use a modal or toast
         console.log("🔍 Zoom in to see more details.");
         return;
       }
-
+  
       if (!hasInteractedRef.current) {
-        hasInteractedRef.current = true; // First interaction after mode change
+        hasInteractedRef.current = true;
         return;
       }
-      
+  
       if (!isDraggingAllowedRef.current) {
-        console.log("🚫 Drag ignored — user interaction not allowed (e.g., after text search)");
+        console.log("🚫 Drag ignored — user interaction not allowed");
         return;
       }
-      
-      const centerLatLng = {
-        lat: center.lat(),
-        lng: center.lng()
-      };
-      // TODO: Polish up the isInsidePreviouslyFetchedArea function to better handle the case
+  
+      const centerLatLng = { lat: center.lat(), lng: center.lng() };
       if (!isInsidePreviouslyFetchedArea(centerLatLng, mapState.lastSearchBounds)) {
         if (userDidManualDragRef.current) {
           reverseGeocode(centerLatLng.lat, centerLatLng.lng, "drag");
-          userDidManualDragRef.current = false; // reset
+          userDidManualDragRef.current = false;
         } else {
           console.log("👋 Idle but not a manual drag — skipping reverseGeocode");
         }
-
-        
+  
         const bounds = map.getBounds();
         const ne = bounds.getNorthEast();
         const sw = bounds.getSouthWest();
-
         const newBounds = {
           north: ne.lat(),
           south: sw.lat(),
           east: ne.lng(),
           west: sw.lng(),
         };
-
+  
         setMapState(prev => ({
           ...prev,
           center: centerLatLng,
           zoom,
           lastSearchBounds: newBounds,
         }));
-
-        console.log("🚩------------------ ........... -----------------🚩");
-        console.log("");
-      }
-      else {
+      } else {
         console.log("Already searched this area — skipping fetch.");
-        console.log("🚩------------------ ........... -----------------🚩");
-        console.log("");
       }
     }, 600);
   
-    const listener = map.addListener("idle", handleIdle);
+    const listener = map.addListener("idle", () => handleIdleRef.current?.());
     return () => listener.remove();
   }, [map, mapState.lastSearchBounds]);
+  
+
+  // useEffect(() => {
+    
+  //   console.log("🚩------------------ HandleIdle UseEffect -----------------🚩");
+  //   if (!map) return;  
+  //   const handleIdle = debounce(() => {
+  //     const center = map.getCenter();
+  //     const zoom = map.getZoom();
+  
+  //     if (zoom < 12) {
+  //       // pop up a message to the user
+  //       // TODO: use a modal or toast
+  //       console.log("🔍 Zoom in to see more details.");
+  //       return;
+  //     }
+
+  //     if (!hasInteractedRef.current) {
+  //       hasInteractedRef.current = true; // First interaction after mode change
+  //       return;
+  //     }
+      
+  //     if (!isDraggingAllowedRef.current) {
+  //       console.log("🚫 Drag ignored — user interaction not allowed (e.g., after text search)");
+  //       return;
+  //     }
+      
+  //     const centerLatLng = {
+  //       lat: center.lat(),
+  //       lng: center.lng()
+  //     };
+  //     // TODO: Polish up the isInsidePreviouslyFetchedArea function to better handle the case
+  //     if (!isInsidePreviouslyFetchedArea(centerLatLng, mapState.lastSearchBounds)) {
+  //       if (userDidManualDragRef.current) {
+  //         reverseGeocode(centerLatLng.lat, centerLatLng.lng, "drag");
+  //         userDidManualDragRef.current = false; // reset
+  //       } else {
+  //         console.log("👋 Idle but not a manual drag — skipping reverseGeocode");
+  //       }
+
+        
+  //       const bounds = map.getBounds();
+  //       const ne = bounds.getNorthEast();
+  //       const sw = bounds.getSouthWest();
+
+  //       const newBounds = {
+  //         north: ne.lat(),
+  //         south: sw.lat(),
+  //         east: ne.lng(),
+  //         west: sw.lng(),
+  //       };
+
+  //       setMapState(prev => ({
+  //         ...prev,
+  //         center: centerLatLng,
+  //         zoom,
+  //         lastSearchBounds: newBounds,
+  //       }));
+
+  //       console.log("🚩------------------ ........... -----------------🚩");
+  //       console.log("");
+  //     }
+  //     else {
+  //       console.log("Already searched this area — skipping fetch.");
+  //       console.log("🚩------------------ ........... -----------------🚩");
+  //       console.log("");
+  //     }
+  //   }, 600);
+  
+  //   const listener = map.addListener("idle", handleIdle);
+  //   return () => listener.remove();
+  // }, [map, mapState.lastSearchBounds]);
   
   
   const MapHandler = ({ place, marker }) => {
@@ -150,6 +207,7 @@ export default function MapComponent({
         map.setZoom(zoomLevel);
       }
       map.setCenter({ lat: place.latitude, lng: place.longitude });
+      
 
     }, [map, place, marker]);
 
