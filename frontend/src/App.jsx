@@ -30,14 +30,18 @@ function App() {
         rating: null,
         distance: 5,
       });
-
+  const [mapState, setMapState] = useState({
+  zoom: 14,
+  center: null,
+  lastSearchBounds: null
+  });
   const {
     places,
     loading,
     loadingMore,
     fetchNextPage,
     hasMore
-  } = usePlacesSearch({ selectedPlace, userLocation, searchMode, category: selectedCategories, selectedFilters  });
+  } = usePlacesSearch({ selectedPlace, userLocation, searchMode, category: selectedCategories, selectedFilters, mapState, distanceFilter: selectedFilters.distance });  
 
   // !! Debugging: Log the places
   useEffect(() => {
@@ -119,6 +123,8 @@ function App() {
               loadingMore={loadingMore}
               selectedFilters={selectedFilters}
               setSelectedFilters={setSelectedFilters}
+              mapState={mapState}
+              setMapState={setMapState}
           />
           } />
           {/* only make thise route available when the place is selected */}

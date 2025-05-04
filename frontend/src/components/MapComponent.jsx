@@ -24,7 +24,9 @@ export default function MapComponent({
   hasInteractedRef,
   isDraggingAllowedRef,
   places = [] ,// <-- Accept array of places
-  distanceFilter
+  distanceFilter,
+  mapState,
+  setMapState,
 }) {
   const [markerRef, marker] = useAdvancedMarkerRef();
   const defaultLocation = {
@@ -33,11 +35,7 @@ export default function MapComponent({
     latitude: 40.712776,
     longitude: -74.005974,
   };
-  const [mapState, setMapState] = useState({
-  zoom: 14,
-  center: null,
-  lastSearchCircle: null
-  });
+
   const userDidManualDragRef = useRef(false);
 
 
@@ -55,7 +53,16 @@ export default function MapComponent({
     return () => dragStartListener.remove();
   }, [map]);
   
-
+  function isInsidePreviouslyFetchedArea(center, bounds) {
+    if (!bounds) return false;
+    const { lat, lng } = center;
+    return (
+      lat >= bounds.south &&
+      lat <= bounds.north &&
+      lng >= bounds.west &&
+      lng <= bounds.east
+    );
+  }
 
 
   useEffect(() => {
@@ -88,7 +95,7 @@ export default function MapComponent({
         lng: center.lng()
       };
       // TODO: Polish up the isInsidePreviouslyFetchedArea function to better handle the case
-      if (!isInsidePreviouslyFetchedArea(centerLatLng, mapState.lastSearchCircle)) {
+      if (!isInsidePreviouslyFetchedArea(centerLatLng, mapState.lastSearchBounds)) {
         if (userDidManualDragRef.current) {
           reverseGeocode(centerLatLng.lat, centerLatLng.lng, "drag");
           userDidManualDragRef.current = false; // reset
@@ -96,26 +103,25 @@ export default function MapComponent({
           console.log("👋 Idle but not a manual drag — skipping reverseGeocode");
         }
 
-        // get the bounds of the map
+        
         const bounds = map.getBounds();
         const ne = bounds.getNorthEast();
         const sw = bounds.getSouthWest();
-        const radius = Math.max(
-          calculateDistance(centerLatLng.lat, centerLatLng.lng, ne.lat(), ne.lng()),
-          calculateDistance(centerLatLng.lat, centerLatLng.lng, sw.lat(), sw.lng())
-        );
-        console.log("Map bounds radius:", radius);
-        // log
-        console.log("Map is updated to center:", centerLatLng, "with zoom:", zoom);
+
+        const newBounds = {
+          north: ne.lat(),
+          south: sw.lat(),
+          east: ne.lng(),
+          west: sw.lng(),
+        };
+
         setMapState(prev => ({
           ...prev,
           center: centerLatLng,
           zoom,
-          lastSearchCircle: {
-            center: centerLatLng,
-            radius: radius,
-          },
+          lastSearchBounds: newBounds,
         }));
+
         console.log("🚩------------------ ........... -----------------🚩");
         console.log("");
       }
@@ -128,7 +134,7 @@ export default function MapComponent({
   
     const listener = map.addListener("idle", handleIdle);
     return () => listener.remove();
-  }, [map, mapState.lastSearchCircle]);
+  }, [map, mapState.lastSearchBounds]);
   
   
   const MapHandler = ({ place, marker }) => {
@@ -156,29 +162,6 @@ export default function MapComponent({
     a.latitude === b.latitude &&
     a.longitude === b.longitude;
 
-
-    function calculateDistance(lat1, lng1, lat2, lng2) {
-      const toRad = (val) => (val * Math.PI) / 180;
-      const R = 6371e3;
-      const dLat = toRad(lat2 - lat1);
-      const dLng = toRad(lng2 - lng1);
-      const a =
-        Math.sin(dLat / 2) ** 2 +
-        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
-
-    
-    function isInsidePreviouslyFetchedArea(center, circle) {
-      if (!circle) return false;
-      const distance = calculateDistance(
-        center.lat,
-        center.lng,
-        circle.center.lat,
-        circle.center.lng
-      );
-      return distance <= circle.radius;
-    }
     
 
   const reverseGeocode = async (latitude, longitude, mode = "nearby") => {

@@ -29,6 +29,8 @@ export default function Home(
   setSelectedCategories,
   selectedFilters,
   setSelectedFilters,
+  mapState,
+  setMapState,
   }
 ) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -91,6 +93,8 @@ export default function Home(
                         isDraggingAllowedRef={isDraggingAllowedRef}
                         places={places}
                         distanceFilter={selectedFilters?.distance || 5}
+                        mapState={mapState}
+                        setMapState={setMapState}
                          />
                         <div className="map-overlay">
                             <span className="map-hint">Click on a marker to view details</span>

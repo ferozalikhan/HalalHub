@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import categoryMap from '../../constants/categoryMap'; // Adjust import as needed
 import { calculateDistanceMiles } from '../utils/distance';
+import { map } from 'lodash';
 
 
 // Helper: Check if place matches selected categories
@@ -147,13 +148,16 @@ function filterPlacesByCategories(places, selectedCategories) {
 }
 
 
-export default function usePlacesSearch({ selectedPlace, userLocation, searchMode, category = [] , selectedFilters }) {
+export default function usePlacesSearch({ selectedPlace, userLocation, searchMode, category = [] , selectedFilters, mapState, distanceFilter }) {
   const [rawPlaces, setRawPlaces] = useState([]);
   const [filteredPlaces, setFilteredPlaces] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextPageToken, setNextPageToken] = useState(null);
+
+  const prevDistanceRef = useRef(distanceFilter);
+
 
   const fetchPlaces = async (isNextPage = false) => {
     if (!selectedPlace?.latitude || !selectedPlace?.longitude) return;
@@ -167,6 +171,7 @@ export default function usePlacesSearch({ selectedPlace, userLocation, searchMod
         lat: selectedPlace.latitude,
         lng: selectedPlace.longitude,
         category: category.length ? category : ["all"],
+        bounds: mapState.lastSearchBounds,
       };
 
       if (searchMode === 'text') {
@@ -211,6 +216,21 @@ useEffect(() => {
   );
   setFilteredPlaces(finalFiltered);
 }, [rawPlaces, category, selectedFilters, searchMode, userLocation]);
+
+useEffect(() => {
+  const prevDistance = prevDistanceRef.current;
+
+  const distanceChanged = distanceFilter !== prevDistance;
+
+  if (distanceChanged && searchMode === "nearby") {
+    // Only refetch from backend if distance got smaller or user zoomed in
+    console.log("📡 Refetching due to distance change:", distanceFilter);
+    fetchPlaces();
+  }
+
+  prevDistanceRef.current = distanceFilter;
+}, [distanceFilter, searchMode]);
+
 
   
 
