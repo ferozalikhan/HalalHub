@@ -1,4 +1,4 @@
-// PlaceList.jsx - Improved version with status under title
+// PlaceList.jsx - Fixed version to prevent nested <a> tags
 import { calculateDistanceMiles } from '../utils/distance';
 
 import { 
@@ -51,18 +51,16 @@ import {
     const options = ['certified', 'verified', 'community'];
     return options[index % options.length];
   };
-  
+
   const formatOpeningHours = (regularOpeningHours) => {
-    if (!regularOpeningHours?.periods) return null;
-    const today = new Date().getDay();
-    const daysOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
-    const todayPeriod = regularOpeningHours.periods.find(
-      period => period.open?.day === daysOfWeek[today]
-    );
-    if (!todayPeriod) return null;
-    const formatTime = (t) => t ? `${(t.hour % 12 || 12)}:${(t.minute || '00').toString().padStart(2, '0')} ${t.hour >= 12 ? 'PM' : 'AM'}` : '';
-    return `${formatTime(todayPeriod.open)} - ${formatTime(todayPeriod.close)}`;
+    if (!regularOpeningHours?.weekdayDescriptions) return null;
+  
+    const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, ...
+    const todayDescription = regularOpeningHours.weekdayDescriptions[today];
+  
+    return todayDescription || null;
   };
+  
 
   function getNeutralFallbackSummary(place, label) {
     const name = place.displayName?.text || "This place";
@@ -70,12 +68,45 @@ import {
     return `${name} is a ${label.toLowerCase()} located in ${city}.`;
   }
   
+  // Component for action buttons to avoid nesting <a> tags
+  const ActionButton = ({ href, className, onClick, children }) => {
+    const handleClick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (onClick) {
+        onClick(e);
+      } else if (href) {
+        window.open(href, '_blank', 'noopener,noreferrer');
+      }
+    };
+    
+    return (
+      <button
+        className={className}
+        onClick={handleClick}
+        type="button"
+      >
+        {children}
+      </button>
+    );
+  };
   
-  
-  
-  export default function PlaceList({ places, userLocation, loading,}) {
+  export default function PlaceList({ places, userLocation, loading }) {
     if (loading) return <div className="loading-container"><div className="loading-spinner"></div><p>Discovering halal places near you...</p></div>;
     if (!places || !places.length) return <div className="no-results">No halal places found. Try adjusting your search.</div>;
+  
+    // Handler for phone calls
+    const handlePhoneClick = (phoneNumber, e) => {
+      e.stopPropagation();
+      window.location.href = `tel:${phoneNumber}`;
+    };
+    
+    // Handler for external links
+    const handleExternalLink = (url, e) => {
+      e.stopPropagation();
+      window.open(url, '_blank', 'noopener,noreferrer');
+    };
   
     return (
       <div className="featured-grid">
@@ -95,8 +126,6 @@ import {
           place.generativeSummary?.overview?.text ||
           place.editorialSummary?.text ||
           getNeutralFallbackSummary(place, label);
-        
-
   
           return (
             <Link key={index} to={`/place/${place.id || index}`} className="place-card" aria-label={`View details for ${place.displayName?.text}`}>
@@ -137,23 +166,40 @@ import {
                 </div>
   
                 {todayHours && <div className="hours-info"><FaClock className="hours-icon" /><span className="hours-text">{todayHours}</span></div>}
-                <div className="place-summary  truncate-2">{summary}</div>
+                <div className="place-summary truncate-2">{summary}</div>
   
                 <div className="contact-actions">
-                  {place.nationalPhoneNumber && <a href={`tel:${place.nationalPhoneNumber}`} className="action-btn phone" onClick={(e) => e.stopPropagation()}><FaPhoneAlt /><span>Call</span></a>}
-                  {place.websiteUri && <a href={place.websiteUri} target="_blank" rel="noopener noreferrer" className="action-btn website" onClick={(e) => e.stopPropagation()}><FaGlobe /><span>Website</span></a>}
-                  {place.googleMapsUri && <a href={place.googleMapsUri} target="_blank" rel="noopener noreferrer" className="action-btn directions" onClick={(e) => e.stopPropagation()}><FaMapMarkerAlt /><span>Directions</span></a>}
+                  {place.nationalPhoneNumber && 
+                    <ActionButton 
+                      className="action-btn phone" 
+                      onClick={(e) => handlePhoneClick(place.nationalPhoneNumber, e)}
+                    >
+                      <FaPhoneAlt /><span>Call</span>
+                    </ActionButton>
+                  }
+                  
+                  {place.websiteUri && 
+                    <ActionButton 
+                      className="action-btn website" 
+                      onClick={(e) => handleExternalLink(place.websiteUri, e)}
+                    >
+                      <FaGlobe /><span>Website</span>
+                    </ActionButton>
+                  }
+                  
+                  {place.googleMapsUri && 
+                    <ActionButton 
+                      className="action-btn directions" 
+                      onClick={(e) => handleExternalLink(place.googleMapsUri, e)}
+                    >
+                      <FaMapMarkerAlt /><span>Directions</span>
+                    </ActionButton>
+                  }
                 </div>
               </div>
-              
             </Link>
-            
           );
-          
-        }
-        )}
-        
+        })}
       </div>
     );
   }
-  
