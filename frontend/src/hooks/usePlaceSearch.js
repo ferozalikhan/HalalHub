@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import categoryMap from '../../constants/categoryMap'; // Adjust import as needed
+import { calculateDistanceMiles } from '../utils/distance';
+
 
 // Helper: Check if place matches selected categories
 function isLikelyFoodTruck(place) {
@@ -11,17 +13,122 @@ function isLikelyFoodTruck(place) {
   return combinedText.includes('truck') && combinedText.includes('halal');
 }
 
+function mapPriceLevel(apiValue) {
+  switch (apiValue) {
+    case 'PRICE_LEVEL_INEXPENSIVE':
+      return '$';
+    case 'PRICE_LEVEL_MODERATE':
+      return '$$';
+    case 'PRICE_LEVEL_EXPENSIVE':
+      return '$$$';
+    case 'PRICE_LEVEL_VERY_EXPENSIVE':
+      return '$$$$';
+    default:
+      return null;
+  }
+}
+
+function applyFrontendFilters(places, filters, searchMode, userLocation) {
+  // return places.filter(place => {
+  //   const placePrice = mapPriceLevel(place.priceLevel);
+  //   const placeRating = place.rating || 0;
+  //   const openNow = place.currentOpeningHours?.openNow;
+  //   const delivery = place.delivery;
+  //   const dineIn = place.dineIn;
+
+  //   const matchesPrice = !filters.price.length || filters.price.includes(placePrice);
+  //   const matchesRating = !filters.rating || placeRating >= filters.rating;
+  //   const matchesOpenNow = !filters.features.includes("open-now") || openNow;
+  //   const matchesDelivery = !filters.features.includes("delivery") || delivery;
+  //   const matchesDineIn = !filters.features.includes("dine-in") || dineIn;
+
+  //   return (
+  //     matchesPrice &&
+  //     matchesRating &&
+  //     matchesOpenNow &&
+  //     matchesDelivery &&
+  //     matchesDineIn
+  //   );
+  // });
+
+  // !! Debugging: Log the filters being applied
+  console.log("📌------------ inside applyFrontendFilters ---------📌");
+  
+  return places.filter(place => {
+    const placePrice = mapPriceLevel(place.priceLevel);
+    const placeRating = place.rating || 0;
+    const openNow = place.currentOpeningHours?.openNow;
+    const delivery = place.delivery;
+    const dineIn = place.dineIn;
+  
+   
+    
+
+    // // !! Debugging: Log the place being filtered
+    console.log("🚩 Filtering Place:", place.displayName.text);
+    console.log("🚩 Place Primary Type:", place.primaryType);
+    // console.log("🚩 Place Price:", placePrice);
+    // console.log("🚩 Place Rating:", placeRating);
+    // console.log("🚩 Open Now:", openNow);
+    // console.log("🚩 Delivery:", delivery);
+    // console.log("🚩 Dine In:", dineIn);
+
+
+    const matchesPrice = !filters.price.length || filters.price.includes(placePrice);
+    const matchesRating = !filters.rating || placeRating >= filters.rating;
+    const matchesOpenNow = !filters.features.includes("open-now") || openNow;
+    const matchesDelivery = !filters.features.includes("delivery") || delivery;
+    const matchesDineIn = !filters.features.includes("dine-in") || dineIn;
+
+    let isWithinDistance = true;
+
+    if ((searchMode === 'nearby') && filters.distance && userLocation) {
+      const placeLat = place.location?.latitude;
+      const placeLng = place.location?.longitude;
+      const userLat = userLocation.lat;
+      const userLng = userLocation.lng;
+
+      const distance = calculateDistanceMiles(userLat, userLng, placeLat, placeLng);
+      // console.log("🚩 User Location:", userLocation);
+      // console.log("🚩 Place Location:", place.location);
+      // console.log("🚩 Distance:", distance);
+      isWithinDistance = distance !== null && distance <= filters.distance;
+    }
+
+    return (
+      matchesPrice &&
+      matchesRating &&
+      matchesOpenNow &&
+      matchesDelivery &&
+      matchesDineIn &&
+      isWithinDistance
+    );
+
+  });
+  
+}
+
+
 
 function filterPlacesByCategories(places, selectedCategories) {
-  console.log("🚩 Selected Categories:", selectedCategories);
+  console.log("🚩------------ inside filterPlacesByCategories ---------🚩"  );
+  // console.log("🚩 Selected Categories:", selectedCategories);
 
-  if (!selectedCategories.length || selectedCategories.includes('all')) return places;
+  if (!selectedCategories.length || selectedCategories.includes('all')) 
+    {
+      console.log("🚩 No categories selected or 'all' selected, returning all places.");
+      console.log("🚩------------------ 🚩 -----------------🚩");
+      console.log("");
+      return places;
+    }
 
   const selectedTypes = selectedCategories
     .map(cat => categoryMap[cat]?.type?.toLowerCase())
     .filter(Boolean);
 
   const filteredPlaces = places.filter(place => {
+    // !! Debugging: Log the place being filtered
+    console.log("🚩 Filtering Place:", place);
     const types = (place.types || []).map(t => t.toLowerCase());
 
     // Special case: food truck
@@ -34,12 +141,16 @@ function filterPlacesByCategories(places, selectedCategories) {
   });
 
   console.log("✅ Filtered Places:", filteredPlaces.length);
+  console.log("🚩------------------ 🚩 -----------------🚩");
+  console.log("");
   return filteredPlaces;
 }
 
 
-export default function usePlacesSearch({ selectedPlace, searchMode, category = [] }) {
-  const [places, setPlaces] = useState([]);
+export default function usePlacesSearch({ selectedPlace, userLocation, searchMode, category = [] , selectedFilters }) {
+  const [rawPlaces, setRawPlaces] = useState([]);
+  const [filteredPlaces, setFilteredPlaces] = useState([]);
+
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextPageToken, setNextPageToken] = useState(null);
@@ -70,12 +181,9 @@ export default function usePlacesSearch({ selectedPlace, searchMode, category = 
 
       let fetchedPlaces = response.data.places || [];
 
-      // Always filter unless "all" is selected
-      if (!category.includes("all")) {
-        fetchedPlaces = filterPlacesByCategories(fetchedPlaces, category);
-      }
+      setRawPlaces(prev => isNextPage ? [...prev, ...fetchedPlaces] : fetchedPlaces);
 
-      setPlaces(prev => isNextPage ? [...prev, ...fetchedPlaces] : fetchedPlaces);
+      setFilteredPlaces(prev => isNextPage ? [...prev, ...fetchedPlaces] : fetchedPlaces);
       setNextPageToken(response.data.nextPageToken || null);
 
     } catch (err) {
@@ -85,13 +193,46 @@ export default function usePlacesSearch({ selectedPlace, searchMode, category = 
       else setLoading(false);
     }
   };
+  // ** Note: only fetch places when selectedPlace, searchMode, or category changes.
+  // ** This is to avoid refetching on slectedFilters change.
+useEffect(() => {
+  fetchPlaces(); // backend call
+}, [selectedPlace, searchMode, category]);
 
-  useEffect(() => {
-    fetchPlaces();
-  }, [selectedPlace, searchMode, category]);
+useEffect(() => {
+  if (!rawPlaces.length || !selectedFilters) return;
+
+  const placesAfterCategory = filterPlacesByCategories(rawPlaces, category);
+  const finalFiltered = applyFrontendFilters(
+    placesAfterCategory,
+    selectedFilters,
+    searchMode,
+    userLocation
+  );
+  setFilteredPlaces(finalFiltered);
+}, [rawPlaces, category, selectedFilters, searchMode, userLocation]);
+
+  
+
+  // // useEffect for selected Filters
+  // useEffect(() => {
+  
+
+  //   console.log("📌------------ selectedFilters ---------📌");
+  //   console.log("🚩 Selected Filters:", selectedFilters);
+  //   // print the length of all fetched places
+  //   console.log("🚩 All Fetched Places:", rawPlaces.length);
+  //   if(!selectedFilters) return;
+
+  //   const filtered = applyFrontendFilters(rawPlaces, selectedFilters, searchMode, userLocation);
+  //   filteredPlaces(filtered);
+    
+  //   console.log("📌------------------ 📌 -----------------📌");
+    
+  // }, [selectedFilters, rawPlaces]);
 
   return {
-    places,
+    places: filteredPlaces,
     loading,
     loadingMore,
     fetchNextPage: () => fetchPlaces(true),

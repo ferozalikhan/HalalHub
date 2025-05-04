@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState } from "react";
 import Navbar from "../components/Navbar.jsx";
 import MapComponent from "../components/MapComponent.jsx";
@@ -26,18 +27,12 @@ export default function Home(
   loadingMore,
   selectedCategories,
   setSelectedCategories,
+  selectedFilters,
+  setSelectedFilters,
   }
 ) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
     // State to manage all filter selections in the sidebar
-    const [selectedFilters, setSelectedFilters] = useState({
-      cuisine: [],
-      price: [],
-      rating: null,
-      features: [],
-      certification: [],
-      distance: 5
-    });
   
   const hasDraggedRef = useRef(false);
   const hasInteractedRef = useRef(false);        // avoid first idle event
@@ -72,6 +67,7 @@ export default function Home(
           manageSidebar={toggleSidebar} 
           selectedFilters={selectedFilters}
           setSelectedFilters={setSelectedFilters}
+          searchMode={searchMode}
         />
         
          <div className={`map-section ${sidebarOpen ? 'with-sidebar' : ''}`}>
@@ -94,6 +90,7 @@ export default function Home(
                         hasInteractedRef={hasInteractedRef}
                         isDraggingAllowedRef={isDraggingAllowedRef}
                         places={places}
+                        distanceFilter={selectedFilters?.distance || 5}
                          />
                         <div className="map-overlay">
                             <span className="map-hint">Click on a marker to view details</span>

@@ -9,6 +9,7 @@ import {
 } from "@vis.gl/react-google-maps";
 import { debounce } from "lodash";
 import { CodeSquare } from "lucide-react";
+import { getZoomForModeOrDistance } from "../utils/modeZoomMap";
 
 
 
@@ -22,7 +23,8 @@ export default function MapComponent({
   hasDraggedRef,
   hasInteractedRef,
   isDraggingAllowedRef,
-  places = [] // <-- Accept array of places
+  places = [] ,// <-- Accept array of places
+  distanceFilter
 }) {
   const [markerRef, marker] = useAdvancedMarkerRef();
   const defaultLocation = {
@@ -31,36 +33,17 @@ export default function MapComponent({
     latitude: 40.712776,
     longitude: -74.005974,
   };
-
- const [mapState, setMapState] = useState({
-  zoom: 13,
+  const [mapState, setMapState] = useState({
+  zoom: 14,
   center: null,
   lastSearchCircle: null
-});
-
-const userDidManualDragRef = useRef(false);
-
-
-   // only true after nearby/text
+  });
+  const userDidManualDragRef = useRef(false);
 
 
-  
-
+   // only true after nearby/text 
   // * gives us the map instance with the useMap hook
   const map = useMap();
-
-  // // useeffect to set the hasDraggedRef to false when the mood is set to "text"
-  // useEffect(() => {
-  //   if (searchMode === "text") {
-  //     hasDraggedRef.current = false;
-  //     setMapState(prev => ({
-  //       ...prev,
-  //       zoom: 13,
-  //       lastSearchCircle: null,
-  //     }));
-  //   }
-  // }, [searchMode]);
-
   
   useEffect(() => {
     if (!map) return;
@@ -76,13 +59,17 @@ const userDidManualDragRef = useRef(false);
 
 
   useEffect(() => {
+    
+    console.log("🚩------------------ HandleIdle UseEffect -----------------🚩");
     if (!map) return;  
     const handleIdle = debounce(() => {
       const center = map.getCenter();
       const zoom = map.getZoom();
   
       if (zoom < 12) {
-        console.log("Too zoomed out to search");
+        // pop up a message to the user
+        // TODO: use a modal or toast
+        console.log("🔍 Zoom in to see more details.");
         return;
       }
 
@@ -96,12 +83,11 @@ const userDidManualDragRef = useRef(false);
         return;
       }
       
-      
       const centerLatLng = {
         lat: center.lat(),
         lng: center.lng()
       };
-      
+      // TODO: Polish up the isInsidePreviouslyFetchedArea function to better handle the case
       if (!isInsidePreviouslyFetchedArea(centerLatLng, mapState.lastSearchCircle)) {
         if (userDidManualDragRef.current) {
           reverseGeocode(centerLatLng.lat, centerLatLng.lng, "drag");
@@ -109,19 +95,34 @@ const userDidManualDragRef = useRef(false);
         } else {
           console.log("👋 Idle but not a manual drag — skipping reverseGeocode");
         }
-        
+
+        // get the bounds of the map
+        const bounds = map.getBounds();
+        const ne = bounds.getNorthEast();
+        const sw = bounds.getSouthWest();
+        const radius = Math.max(
+          calculateDistance(centerLatLng.lat, centerLatLng.lng, ne.lat(), ne.lng()),
+          calculateDistance(centerLatLng.lat, centerLatLng.lng, sw.lat(), sw.lng())
+        );
+        console.log("Map bounds radius:", radius);
+        // log
+        console.log("Map is updated to center:", centerLatLng, "with zoom:", zoom);
         setMapState(prev => ({
           ...prev,
           center: centerLatLng,
           zoom,
           lastSearchCircle: {
             center: centerLatLng,
-            radius: 5000,
+            radius: radius,
           },
         }));
+        console.log("🚩------------------ ........... -----------------🚩");
+        console.log("");
       }
       else {
         console.log("Already searched this area — skipping fetch.");
+        console.log("🚩------------------ ........... -----------------🚩");
+        console.log("");
       }
     }, 600);
   
@@ -130,17 +131,20 @@ const userDidManualDragRef = useRef(false);
   }, [map, mapState.lastSearchCircle]);
   
   
-  
-
-
   const MapHandler = ({ place, marker }) => {
-  
 
     useEffect(() => {
       if (!map || !place || !marker) return;
 
+      // map.setCenter({ lat: place.latitude, lng: place.longitude });
+      // // TODO: set zoom level based on place type
+      // marker.position = { lat: place.latitude, lng: place.longitude };
+      const zoomLevel = getZoomForModeOrDistance(searchMode, distanceFilter);
+      if (zoomLevel) {
+        map.setZoom(zoomLevel);
+      }
       map.setCenter({ lat: place.latitude, lng: place.longitude });
-      marker.position = { lat: place.latitude, lng: place.longitude };
+
     }, [map, place, marker]);
 
     return null;
@@ -176,13 +180,11 @@ const userDidManualDragRef = useRef(false);
       return distance <= circle.radius;
     }
     
-    
-
-  
-  
 
   const reverseGeocode = async (latitude, longitude, mode = "nearby") => {
-    console.log("Reverse geocode triggered with mode:", mode);
+    console.log("🚩------------------ Reverse Geocode -----------------🚩");
+    // add icon to console log
+    console.log("🔄 Reverse geocode triggered with mode:", mode);
     try {
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
@@ -194,8 +196,6 @@ const userDidManualDragRef = useRef(false);
         console.warn("Reverse geocoding failed or returned no results.");
         return;
       }
-
-      console.log("--->    <---");
     
       if (data.status === "OK") {
         const place = data.results[0];
@@ -215,6 +215,8 @@ const userDidManualDragRef = useRef(false);
         }
 
         const formattedAddress = [city, state, country].filter(Boolean).join(", ");
+        // add icon to console log in print 
+        console.log("📍 Reverse geocode result:", formattedAddress);
         // only update if it differs from the current selected place
         setSelectedPlace(prev => {
           const newPlace = {
@@ -230,18 +232,7 @@ const userDidManualDragRef = useRef(false);
           console.log("Updating selectedPlace:", newPlace);
           return newPlace;
         });
-        
-        
-        
-        // only update the user location if the mode is "nearby"
-        // if (mode === "nearby") {
-        // setUserLocation({ lat: latitude, lng: longitude });
-        // setSearchMode("nearby");
-        // }
-        // else if (mode === "drag")
-        // {
-        //   setSearchMode("drag");
-        // }
+
         if (mode === "text") {
           setSearchMode("text");
           isDraggingAllowedRef.current = true;
@@ -258,6 +249,10 @@ const userDidManualDragRef = useRef(false);
       } else {
         setSelectedPlace(defaultLocation);
       }
+      // !! Debugging: Logs
+      console.log("🚩------------------ ........... -----------------🚩");
+      console.log("");
+      // !! Debugging: Logs
       
     } catch (error) {
       console.error("Reverse geocoding error:", error);
@@ -265,12 +260,13 @@ const userDidManualDragRef = useRef(false);
     }
   };
 
+  // Get user's location on component mount
   useEffect(() => {
     const fetchLocation = async () => {
       try {
         navigator.geolocation.getCurrentPosition(
           async ({ coords }) => {
-            await reverseGeocode(coords.latitude, coords.longitude);
+            await reverseGeocode(coords.latitude, coords.longitude, "nearby");
           },
           (err) => {
             console.error("Geolocation error:", err);
@@ -300,7 +296,7 @@ const userDidManualDragRef = useRef(false);
             mapId={import.meta.env.VITE_GOOGLE_MAPS_MAP_ID}    
             options={{ gestureHandling: "greedy" }} // to allow dragging     
           >
-            {/* 🔵 User’s Marker */}
+            {/* User’s Marker */}
             <AdvancedMarker
               ref={markerRef}
               position={{
@@ -311,7 +307,7 @@ const userDidManualDragRef = useRef(false);
               <Pin background="#4285F4" glyphColor="#FFFFFF" borderColor="#1A73E8" />
             </AdvancedMarker>
 
-            {/* 🍽️ All Fetched Halal Places */}
+            {/* All Fetched Halal Places */}
             {places.map((place, idx) => {
               const lat = place.location?.latitude;
               const lng = place.location?.longitude;
@@ -341,7 +337,12 @@ const userDidManualDragRef = useRef(false);
         )}
       </div>
 
-      <MapHandler place={selectedPlace} marker={marker} />
+      <MapHandler 
+        place={selectedPlace}
+        marker={marker}
+        searchMode={searchMode}
+        distanceFilter={distanceFilter}
+        />
     </div>
   );
 }

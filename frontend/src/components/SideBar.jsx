@@ -10,12 +10,14 @@ import {
 } from 'react-icons/fa';
 import { MdOutlineDeliveryDining } from 'react-icons/md';
 import { BiDish } from 'react-icons/bi';
+import { useEffect } from 'react';
 
 export default function SideBar({
   toggleSidebar,
   manageSidebar,
   selectedFilters,
-  setSelectedFilters
+  setSelectedFilters,
+  searchMode,
 }) {
   const handleCheckboxChange = (filterType, value) => {
     setSelectedFilters(prev => {
@@ -35,6 +37,20 @@ export default function SideBar({
     });
   };
 
+    // useEffect to log selected categories
+    useEffect(() => {
+      // !! Debugging: Log the selected categories
+      console.log("📍------------ inside SideBar ---------📍");
+      console.log("Selected Filters:", selectedFilters);
+      console.log("Selected Cuisine:", selectedFilters.cuisine);
+      console.log("Selected Price:", selectedFilters.price);
+      console.log("Selected Rating:", selectedFilters.rating);
+      console.log("Selected Features:", selectedFilters.features);
+      console.log("Selected Certification:", selectedFilters.certification);
+      console.log("Selected Distance:", selectedFilters.distance);
+      console.log("📍-------------------📍-----------------📍");
+      console.log("");
+    }, [selectedFilters]);
   const handleDistanceChange = (e) => {
     setSelectedFilters(prev => ({
       ...prev,
@@ -44,7 +60,6 @@ export default function SideBar({
 
   const resetFilters = () => {
     setSelectedFilters({
-      cuisine: [],
       price: [],
       rating: null,
       features: [],
@@ -82,6 +97,9 @@ export default function SideBar({
         </button>
       </div>
 
+      {/* only show the distance slider if the mode is either nearby or drag */}
+      {searchMode === 'nearby' ? (
+
       <div className="filter-group">
         <h3 className="filter-title">
           <FaMapMarkerAlt className="filter-icon" /> Distance
@@ -93,6 +111,10 @@ export default function SideBar({
           </div>
         </div>
       </div>
+      ) : (
+       null
+      )
+      }
 
       <div className="filter-group">
         <h3 className="filter-title">Certification</h3>
@@ -141,7 +163,7 @@ export default function SideBar({
         </div>
       </div>
 
-      <div className="filter-group">
+      {/* <div className="filter-group">
         <h3 className="filter-title">Cuisine</h3>
         <ul className="filter-list">
           {cuisineOptions.map(cuisine => (
@@ -154,7 +176,7 @@ export default function SideBar({
             </li>
           ))}
         </ul>
-      </div>
+      </div> */}
 
       <div className="filter-group">
         <h3 className="filter-title">Features</h3>
