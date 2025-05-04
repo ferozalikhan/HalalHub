@@ -1,4 +1,6 @@
 // PlaceList.jsx - Improved version with status under title
+import { calculateDistanceMiles } from '../utils/distance';
+
 import { 
     FaStar, FaMapMarkerAlt, FaClock, FaUtensils, FaMotorcycle, FaShoppingBag, 
     FaPhoneAlt, FaGlobe 
@@ -8,16 +10,6 @@ import {
   
   const getPhotoUrl = (photoRef) => `https://places.googleapis.com/v1/${photoRef.name}/media?maxWidthPx=400&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`;
   
-  const calculateDistance = (userLat, userLng, placeLat, placeLng) => {
-    if (!userLat || !userLng || !placeLat || !placeLng) return null;
-    const toRad = (val) => (val * Math.PI) / 180;
-    const R = 6371;
-    const dLat = toRad(placeLat - userLat);
-    const dLng = toRad(placeLng - userLng);
-    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(userLat)) * Math.cos(toRad(placeLat)) * Math.sin(dLng / 2) ** 2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return (R * c * 0.621371).toFixed(1);
-  };
   
   const extractLocation = (formattedAddress) => {
     if (!formattedAddress) return "Location unavailable";
@@ -94,7 +86,7 @@ import {
           // const imageUrl = place.photos?.[0]?.photoReference ? getPhotoUrl(place.photos[0]) : null;
           const imageUrl = 'https://placehold.co/400x200?text=Halal+Restaurant&font=roboto';
 
-          const distance = userLocation && place.location ? calculateDistance(userLocation.lat, userLocation.lng, place.location.latitude, place.location.longitude) : null;
+          const distance = userLocation && place.location ? calculateDistanceMiles(userLocation.lat, userLocation.lng, place.location.latitude, place.location.longitude) : null;
           const location = extractLocation(place.formattedAddress);
           const { icon, label } = getPlaceTypeInfo(place.primaryType, place.types);
           const halalStatus = getHalalVerification(place, index);

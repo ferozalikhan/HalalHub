@@ -23,19 +23,33 @@ function App() {
   const [searchMode, SetSearchMode] = useState("default");
   // const [places, setPlaces] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
-
+  const [selectedFilters, setSelectedFilters] = useState({
+        price: [],
+        features: [],
+        certification: [],
+        rating: null,
+        distance: 5,
+      });
+  const [mapState, setMapState] = useState({
+  zoom: 14,
+  center: null,
+  lastSearchBounds: null
+  });
   const {
     places,
     loading,
     loadingMore,
     fetchNextPage,
     hasMore
-  } = usePlacesSearch({ selectedPlace, searchMode, category: selectedCategories });
+  } = usePlacesSearch({ selectedPlace, userLocation, searchMode, category: selectedCategories, selectedFilters, mapState, distanceFilter: selectedFilters.distance });  
 
   // !! Debugging: Log the places
   useEffect(() => {
-    console.log("📍 inside App");
+    console.log("📍------------- inside App ----------📍");
     console.log("hasMore:", hasMore);
+    console.log("-📍----------------------------------📍-");
+    // log blank line so readability
+    console.log("");
   }, [hasMore]);
   
 
@@ -107,6 +121,10 @@ function App() {
               hasMore = {hasMore}
               loading={loading} 
               loadingMore={loadingMore}
+              selectedFilters={selectedFilters}
+              setSelectedFilters={setSelectedFilters}
+              mapState={mapState}
+              setMapState={setMapState}
           />
           } />
           {/* only make thise route available when the place is selected */}

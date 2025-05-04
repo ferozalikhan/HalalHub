@@ -2,17 +2,20 @@ const axios = require("axios");
 const { fieldMask, categoryMap } = require("../constants/googleFieldMask");
 
 exports.searchPlacesController = async (req, res) => {
-  const { mode = "text", query, lat, lng, category = [], pageToken } = req.query;
-
+  const { mode = "text", query, lat, lng, category = [], pageToken, bounds  } = req.query;
+  console.log("📦-------------------📦--------------------📦");
   console.group("📦 Original Request Params");
   console.log("Mode:", mode);
   console.log("Query:", query);
   console.log("Lat/Lng:", lat, lng);
   console.log("Category:", category);
   console.log("Page Token:", pageToken);
+  console.log("Bounds:", bounds);
   console.groupEnd();
+  console.log("📦-------------------📦--------------------📦");
 
-  const radius = 5000;
+  // a well suited radius for a city
+  const radius = 10000; // 10 km
   const rangeSize = 20;
   const fallbackCity = "New York";
 
@@ -66,12 +69,30 @@ exports.searchPlacesController = async (req, res) => {
       pageSize: rangeSize,
       languageCode: "en",
       ...(pageToken && { pageToken }),
+      // if bonds is provided, use it to restrict the search area
+      ...(bounds && {
       locationRestriction: {
+        rectangle: {
+          low: {
+            latitude: parseFloat(bounds.south),
+            longitude: parseFloat(bounds.west),
+          },
+          high: {
+            latitude: parseFloat(bounds.north),
+            longitude: parseFloat(bounds.east),
+          },
+        },
+      },
+    }),
+    // if no bounds, use lat/lng to restrict the search area
+      ...(lat && lng && {
+       locationRestriction: {
         rectangle: {
           low: { latitude: latitude - 0.03, longitude: longitude - 0.03 },
           high: { latitude: latitude + 0.03, longitude: longitude + 0.03 },
         },
       },
+      }),
     };
   } else if (mode === "default") {
     apiUrl = TEXT_SEARCH_URL;
@@ -92,12 +113,14 @@ exports.searchPlacesController = async (req, res) => {
 
   try {
     const response = await axios.post(apiUrl, requestBody, { headers });
+    console.log("✅-------------------✅--------------------✅");
 
     console.group("✅ Google Places API Response");
     console.log("Status:", response.status);
     console.log("Places found:", response.data.places?.length || 0);
     console.log("Next Page Token:", response.data.nextPageToken);
     console.groupEnd();
+    console.log("✅-------------------✅--------------------✅");
 
     res.status(200).json({
       places: Array.isArray(response.data.places) ? response.data.places : [],

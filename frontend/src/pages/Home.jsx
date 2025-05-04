@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState } from "react";
 import Navbar from "../components/Navbar.jsx";
 import MapComponent from "../components/MapComponent.jsx";
@@ -26,13 +27,18 @@ export default function Home(
   loadingMore,
   selectedCategories,
   setSelectedCategories,
+  selectedFilters,
+  setSelectedFilters,
+  mapState,
+  setMapState,
   }
 ) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const hasDraggedRef = useRef(false);
+    // State to manage all filter selections in the sidebar
   
-    const hasInteractedRef = useRef(false);        // avoid first idle event
-    const isDraggingAllowedRef = useRef(true);     // only true after nearby/text
+  const hasDraggedRef = useRef(false);
+  const hasInteractedRef = useRef(false);        // avoid first idle event
+  const isDraggingAllowedRef = useRef(true);     // only true after nearby/text
  
 
   const toggleSidebar = () => {
@@ -58,7 +64,13 @@ export default function Home(
 
       <main className="main-container">
 
-        <SideBar toggleSidebar={sidebarOpen} manageSidebar={toggleSidebar} />
+        <SideBar 
+          toggleSidebar={sidebarOpen} 
+          manageSidebar={toggleSidebar} 
+          selectedFilters={selectedFilters}
+          setSelectedFilters={setSelectedFilters}
+          searchMode={searchMode}
+        />
         
          <div className={`map-section ${sidebarOpen ? 'with-sidebar' : ''}`}>
                     <div className="map-header">
@@ -80,6 +92,9 @@ export default function Home(
                         hasInteractedRef={hasInteractedRef}
                         isDraggingAllowedRef={isDraggingAllowedRef}
                         places={places}
+                        distanceFilter={selectedFilters?.distance || 5}
+                        mapState={mapState}
+                        setMapState={setMapState}
                          />
                         <div className="map-overlay">
                             <span className="map-hint">Click on a marker to view details</span>
