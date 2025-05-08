@@ -49,8 +49,8 @@ const basicFields = [
   // Final combined field mask string
   const fieldMask = [...basicFields, ...uiFields, ...extraFields].join(",");
   
-  module.exports = {
-    fieldMask,
-    categoryMap,
-  };
-  
+  // module.exports = {
+  //   fieldMask,
+  //   categoryMap,
+  // };
+  export { fieldMask, categoryMap };

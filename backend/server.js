@@ -1,8 +1,13 @@
 // server.js
-const express = require('express');
-const dotenv = require('dotenv');
-const cors = require('cors');
-const placesRoutes = require('./routes/PlacesRoutes'); // Import the routes
+// const express = require('express');
+// const dotenv = require('dotenv');
+// const cors = require('cors');
+import express from 'express'; // Import express
+import dotenv from 'dotenv'; // Import dotenv for environment variables
+import cors from 'cors'; // Import cors for Cross-Origin Resource Sharing
+import placesRoutes from "./routes/PlacesRoutes.js"; // Import the routes
+import admin from "./config/firebaseAdmin.js"; // Import the Firebase admin configuration
+
 
 
 // Load environment variables from .env file
@@ -28,6 +33,18 @@ app.get('/', (req, res) => {
 
 // Define the routes
 app.use('/api/places', placesRoutes); // Mount the places routes
+
+
+// Debugging firebase admin initialization
+app.get("/admin-check", async (req, res) => {
+  const users = await admin.auth().listUsers(1); // just fetch 1 user
+  res.json(users);
+});
+
+
+
+
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
