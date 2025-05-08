@@ -1,0 +1,283 @@
+/* AuthPage.css */
+
+.auth-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6); /* Dimmed background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999; /* Above everything */
+  }
+
+  
+  .auth-container {
+    
+    position: relative;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: auto;
+    padding: var(--spacing-4);
+    background-color: var(--color-emerald-light);
+    border-radius: var(--radius-lg);
+  }
+  
+/* .auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: var(--spacing-4);
+    background-color: var(--color-emerald-light);
+  } */
+  
+  .auth-card {
+    width: 100%;
+    max-width: 460px;
+    padding: var(--spacing-8);
+    margin: var(--spacing-4) 0;
+    background-color: var(--color-white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .auth-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: var(--spacing-6);
+    text-align: center;
+  }
+  
+  .auth-logo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: var(--spacing-4);
+  }
+  
+  .auth-header h1 {
+    color: var(--color-teal-dark);
+    margin-bottom: var(--spacing-2);
+  }
+  
+  .auth-subtitle {
+    color: var(--color-gray-500);
+    margin-bottom: var(--spacing-4);
+  }
+  
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+    margin-bottom: var(--spacing-6);
+  }
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+  
+  .form-group label {
+    font-weight: 500;
+    color: var(--color-gray-700);
+    font-size: var(--text-caption);
+  }
+  
+  .password-requirements {
+    font-size: var(--text-small);
+    color: var(--color-gray-500);
+    margin-top: var(--spacing-1);
+  }
+  
+  .error-message {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--color-error);
+    padding: var(--spacing-3);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-4);
+    font-size: var(--text-caption);
+  }
+  
+  .success-message {
+    background-color: rgba(52, 211, 153, 0.1);
+    color: var(--color-success);
+    padding: var(--spacing-3);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-4);
+    font-size: var(--text-caption);
+  }
+  
+  .auth-submit {
+    width: 100%;
+    padding: var(--spacing-3);
+    font-weight: 600;
+    margin-top: var(--spacing-2);
+  }
+  
+  .auth-submit.loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  
+  .auth-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: var(--spacing-4) 0;
+    color: var(--color-gray-400);
+  }
+  
+  .auth-divider::before,
+  .auth-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--color-gray-200);
+  }
+  
+  .auth-divider span {
+    padding: 0 var(--spacing-2);
+    font-size: var(--text-small);
+  }
+  
+  .auth-google {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-2);
+    background-color: var(--color-white);
+    border: 1px solid var(--color-gray-300);
+    color: var(--color-gray-800);
+    padding: var(--spacing-3);
+    font-weight: 500;
+  }
+  
+  .auth-google:hover {
+    background-color: var(--color-gray-50);
+  }
+  
+  .google-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .auth-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-3);
+    margin-top: var(--spacing-6);
+  }
+  
+  .auth-text-button {
+    background: none;
+    border: none;
+    color: var(--color-emerald-main);
+    font-size: var(--text-caption);
+    cursor: pointer;
+    padding: var(--spacing-1);
+  }
+
+  .reset-password {
+    /* pick the best color for reset password button */
+    background: none;
+    border: none;
+    /* light redish  */
+    color: rgb(133, 30, 30)
+
+  }
+  
+  .auth-text-button:hover {
+    color: var(--color-emerald-dark);
+    text-decoration: underline;
+  }
+  
+
+  .auth-close-button {
+    position: absolute;
+    top: var(--spacing-4);
+    right: var(--spacing-4);
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--color-gray-400);
+    z-index: 1001;
+    transition: color 0.2s ease;
+  }
+  
+  .auth-close-button:hover {
+    color: var(--color-emerald-dark);
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 640px) {
+    .auth-card {
+      padding: var(--spacing-4);
+    }
+    
+    .auth-logo {
+      width: 60px;
+      height: 60px;
+    }
+  }
+  
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    .auth-container {
+      background-color: var(--color-bg-primary);
+    }
+    
+    .auth-card {
+      background-color: var(--color-bg-secondary);
+    }
+    
+    .auth-header h1 {
+      color: var(--color-text-primary);
+    }
+    
+    .auth-subtitle {
+      color: var(--color-gray-400);
+    }
+    
+    .form-group label {
+      color: var(--color-gray-300);
+    }
+    
+    .auth-google {
+      background-color: var(--color-bg-secondary);
+      border: 1px solid var(--color-gray-700);
+      color: var(--color-gray-200);
+    }
+    
+    .auth-google:hover {
+      background-color: var(--color-gray-800);
+    }
+    
+    .error-message {
+      background-color: rgba(239, 68, 68, 0.2);
+    }
+    
+    .success-message {
+      background-color: rgba(52, 211, 153, 0.2);
+    }
+  }
+
+  .auth-card {
+    animation: fadeInUp 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeInUp {
+    0% {
+      transform: translateY(30px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
