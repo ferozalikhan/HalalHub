@@ -9,7 +9,7 @@
 }
 
 .main-container {
-  margin-top: 50px;
+  margin-top: 60px;
   width: 100%;
   display: flex;
   flex-direction: row; /* Changed to row to allow sidebar to be on left */
@@ -17,54 +17,83 @@
   min-height: calc(100vh - 80px);
 }
 
+
 /* Map Section Styling */
 .map-section {
   flex: 1;
-  padding: var(--spacing-4);
+  padding: var(--spacing-1);
   display: flex;
   flex-direction: column;
-  
   gap: var(--spacing-4);
   transition: margin-left 0.3s ease;
-  width: 100%;
-}
+  width: 100vw;
 
+}
+   
 /* When sidebar is open, adjust the map section */
 .map-section.with-sidebar {
-  margin-left: 280px;
+  margin-left: 300px;
+}
+.map-section.with-sidebar {
+  width: calc(100vw - 300px); /* Adjust for the sidebar width */
+  margin-left: 300px; /* Sidebar width */
 }
 
 .map-header {
   display: flex;
   justify-content: center; /* center the header */
   flex-direction: column; /* stack the title and subtitle */
-  gap: var(--spacing-2);
-  padding: var(--spacing-4);
+
   
   /* display in the center of the screen */
   align-items: center;
   width: 100%;
 }
 
-.map-header h1 {
+/* .map-header h1 {
   color: var(--color-emerald-dark);
   margin-bottom: var(--spacing-1);
 }
 
+
 .subtitle {
   color: var(--color-gray-600);
   font-size: var(--text-body-large);
+} */
+
+.map-header h1 {
+  color: var(--color-emerald-dark);
+  font-size: 2rem; /* ~32px */
+  font-weight: 600;
+  margin-bottom: var(--spacing-1);
+  text-align: center;
 }
+
+.subtitle {
+  color: var(--color-gray-500);
+  font-size: 1.125rem; /* ~18px */
+  font-weight: 400;
+  text-align: center;
+  margin-top: 4px;
+}
+
 
 .map-container {
   width: 100%;
-  height: 50vh;
+  /* height: 50vh; */
   border-radius: var(--radius-lg);
   overflow: hidden;
   position: relative;
   box-shadow: var(--shadow-md);
   background-color: var(--color-gray-100);
+    /* height: clamp(300px, 40vh, 500px); */
+    /* height: clamp(280px, 40vh, 500px); */
+  height: 37vh;
+
+  
 }
+
+
 
 .map-overlay {
   position: absolute;
@@ -87,13 +116,13 @@
 
 /* Featured Section */
 .featured-section {
-  padding: var(--spacing-4) 0;
+  padding: var(--spacing-2) 0;
   width: 100%;
 }
 
 .featured-section h2 {
-  color: var(--color-teal-dark);
-  margin-bottom: var(--spacing-6);
+  color: var(--color-emerald-dark);
+  margin-bottom: var(--spacing-2);
   text-align: center;
 }
 

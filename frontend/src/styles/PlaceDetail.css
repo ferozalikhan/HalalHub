@@ -1,7 +1,7 @@
 /* PlaceDetail.css - Styling for the HalalHub Place Detail view */
 
 .place-detail-container {
-    max-width: 1024px;
+    width: 100vw;
     margin: 0 auto;
     padding: var(--spacing-4);
   }
@@ -126,6 +126,7 @@
     overflow: hidden;
     box-shadow: var(--shadow-md);
   }
+
   
   .photo-grid {
     display: grid;
@@ -138,7 +139,9 @@
   .photo-item {
     height: 100%;
     background-color: var(--color-sand-light);
+    border-radius: var(--radius-sm);
   }
+
   
   .photo-main {
     grid-row: span 2;

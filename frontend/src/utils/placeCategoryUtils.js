@@ -3,6 +3,12 @@ export function getPlaceTypeInfo(primaryType, types) {
     'restaurant': { label: 'restaurants', glyph: '🍴' },
     'meal_takeaway': { label: 'food_truck', glyph: '🚚' },
     'store': { label: 'store', glyph: '🛒' },
+    'cafe': { label: 'cafe', glyph: '☕' },
+    'bakery': { label: 'bakery', glyph: '🍞' },
+    'grocery_store': { label: 'grocery', glyph: '🛒' },
+    'supermarket': { label: 'supermarket', glyph: '🛒' },
+    'food': { label: 'food', glyph: '🍽️' },
+    
   };
 
   const normalize = (type) => type.toLowerCase().replace(/_/g, '');

@@ -8,9 +8,9 @@ import '../styles/Navbar.css';
  // Helper function to get display labels for categories
  const getCategoryLabel = (category) => {
   const labels = {
-    restaurants: 'Halal Restaurants',
-    street_food: 'Food Trucks',
-    grocery_store: 'Grocery Stores',
+    restaurants: '🍴 Restaurants',
+    street_food: '🚚 Food Trucks',
+    grocery_store: '🛒 Grocery Stores',
     // Add more categories here
   };
   return labels[category] || category;
@@ -19,16 +19,19 @@ import '../styles/Navbar.css';
 export default function Navbar(
   { 
     toggleSidebarHandler,
-     selectedPlace,
-      setSelectedPlace,
-      searchMode,
-       setSearchMode,
+    selectedPlace,
+    setSelectedPlace,
+    searchMode,
+    setSearchMode,
     hasDraggedRef,
     hasInteractedRef,
     isDraggingAllowedRef,
     selectedCategories,
     setSelectedCategories,
-       } )  {
+    onLoginClick, 
+    onSignupClick,
+  } )  
+{
   const [dropdownOpen, setDropdownOpen] = useState(false);  
   const [placeAutocomplete, setPlaceAutocomplete] = useState(null);
   // set manual input to the selected place's formatted address
@@ -139,17 +142,17 @@ export default function Navbar(
     });
     setManualInput(formattedAddress);
     // first check if search mode is not equal to "text"
-    setSearchMode("text");              // ✅ NOW it's safe to call
+    setSearchMode("text");              // NOW it's safe to call
     isDraggingAllowedRef.current = true;
     hasInteractedRef.current = false;
   });
   }, [placeAutocomplete]);
 
   // useEffect to log selected categories
-  useEffect(() => {
-    // !! Debugging: Log the selected categories
-    console.log("Selected categories:", selectedCategories);
-  }, [selectedCategories]);
+  // useEffect(() => {
+  //   // !! Debugging: Log the selected categories
+  //   console.log("Selected categories:", selectedCategories);
+  // }, [selectedCategories]);
   
   // Function to toggle a category selection
   const toggleCategory = (category) => {
@@ -164,7 +167,6 @@ export default function Navbar(
       setSelectedCategories((prev) => [...prev, category]);
     }
   };
-  
   
   // Remove a selected category
   const removeCategory = (category) => {
@@ -323,9 +325,10 @@ export default function Navbar(
 
         {/* Auth Buttons */}
         <div className="navbar-auth">
-          <button className="btn-login">Log in</button>
-          <button className="btn-signup">Sign up</button>
+        <button className="btn-login" onClick={onLoginClick}>Log in</button>
+        <button className="btn-signup" onClick={onSignupClick}>Sign up</button>
         </div>
+
       </div>
     </nav>
   );
