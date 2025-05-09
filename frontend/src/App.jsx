@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Home from './pages/Home'
+import { AuthProvider } from "./contexts/AuthContext";
 import { APIProvider } from '@vis.gl/react-google-maps'
 import './App.css'
 // routes
@@ -54,7 +55,7 @@ function App() {
 
   return (
   
-
+    <AuthProvider>
       <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
         <Routes>
           <Route path="/" element={
@@ -87,6 +88,7 @@ function App() {
           {/* Add more routes here */}
         </Routes>
       </APIProvider>
+    </AuthProvider>
 
 
   )
