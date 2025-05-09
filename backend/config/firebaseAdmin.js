@@ -1,17 +1,18 @@
 import admin from "firebase-admin";
 import { readFileSync } from "fs";
+import { getFirestore } from "firebase-admin/firestore";
 
-// Read the file and parse JSON
 const serviceAccount = JSON.parse(
   readFileSync(new URL("./firebase-service-account.json", import.meta.url))
 );
 
-
-// Prevent double initialization during hot reload or tests
+// Initialize Firebase Admin SDK only once
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });
 }
 
-export default admin;
+const db = getFirestore();
+
+export { admin, db }; // ✅ named exports (clear + testable)

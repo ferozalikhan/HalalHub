@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import categoryMap from '../../constants/categoryMap'; // Adjust import as needed
+import categoryMap from '../constants/categoryMap'; // Adjust import as needed
 import { calculateDistanceMiles } from '../utils/distance';
-import { map } from 'lodash';
+
 
 
 // Helper: Check if place matches selected categories
