@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Search, MapPin } from 'lucide-react';
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
+import { useAuth } from "../contexts/AuthContext";
 import '../styles/Navbar.css';
 
  // Helper function to get display labels for categories
@@ -16,33 +17,50 @@ import '../styles/Navbar.css';
   return labels[category] || category;
 };
 
-export default function Navbar(
-  { 
-    toggleSidebarHandler,
-    selectedPlace,
-    setSelectedPlace,
-    searchMode,
-    setSearchMode,
-    hasDraggedRef,
-    hasInteractedRef,
-    isDraggingAllowedRef,
-    selectedCategories,
-    setSelectedCategories,
-    onLoginClick, 
-    onSignupClick,
-  } )  
-{
-  const [dropdownOpen, setDropdownOpen] = useState(false);  
+export default function Navbar({
+  toggleSidebarHandler,
+  selectedPlace,
+  setSelectedPlace,
+  searchMode,
+  setSearchMode,
+  hasDraggedRef,
+  hasInteractedRef,
+  isDraggingAllowedRef,
+  selectedCategories,
+  setSelectedCategories,
+  onLoginClick,
+  onSignupClick,
+}) {
+  const { isLoggedIn, userProfile, logout } = useAuth();
+  const [dropdownOpen, setDropdownOpen] = useState(false); // For category dropdown
+  const [avatarDropdownOpen, setAvatarDropdownOpen] = useState(false); // For user avatar dropdown
   const [placeAutocomplete, setPlaceAutocomplete] = useState(null);
-  // set manual input to the selected place's formatted address
   const [manualInput, setManualInput] = useState("");
-  
 
+  const inputRef = useRef(null);
+
+  // Handle clicks outside the user avatar dropdown to close it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest(".auth-logged-in")) {
+        setAvatarDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Function to toggle the user avatar dropdown
+  const toggleAvatarDropdown = () => {
+    setAvatarDropdownOpen((prev) => !prev);
+  };
 
   // Refs for the dropdown and selected options
   const dropdownRef = useRef(null);
   const selectedOptionsRef = useRef(null);
-  const inputRef = useRef(null);
 
   // Use the Maps library to get the user's location
   const places = useMapsLibrary("places"); // Get the Places library from the Maps API
@@ -325,8 +343,47 @@ export default function Navbar(
 
         {/* Auth Buttons */}
         <div className="navbar-auth">
-        <button className="btn-login" onClick={onLoginClick}>Log in</button>
-        <button className="btn-signup" onClick={onSignupClick}>Sign up</button>
+          {isLoggedIn ? (
+            <div className="auth-logged-in">
+              <div className="user-info" onClick={toggleAvatarDropdown}>
+                {userProfile?.avatar ? (
+                  <img
+                    src={userProfile.avatar}
+                    alt="User Avatar"
+                    className="user-avatar"
+                  />
+                ) : (
+                  <div className="user-avatar-placeholder">
+                    {userProfile?.name?.charAt(0).toUpperCase() || "U"}
+                  </div>
+                )}
+                <span className="user-name">{userProfile?.name || "User"}</span>
+              </div>
+
+              {avatarDropdownOpen && (
+                <div className="user-dropdown">
+                  <ul>
+                    <li>
+                      <a href="/profile">Profile</a>
+                    </li>
+                    <li>
+                      <a href="/settings">Settings</a>
+                    </li>
+                    <li onClick={logout}>Logout</li>
+                  </ul>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="auth-buttons">
+              <button className="btn-login" onClick={onLoginClick}>
+                Log in
+              </button>
+              <button className="btn-signup" onClick={onSignupClick}>
+                Sign up
+              </button>
+            </div>
+          )}
         </div>
 
       </div>
