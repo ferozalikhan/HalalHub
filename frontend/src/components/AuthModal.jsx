@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/AuthModal.css';
-import { auth } from '../firebase/index.js'; // Adjust the import based on your project structure
+import { auth } from '../services/firebase/index.js'; // Adjust the import based on your project structure
 import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-  sendPasswordResetEmail
-} from 'firebase/auth';
+  signInWithEmail,
+  signInWithGoogle,
+  createAccount,
+  signOutUser,
+  getIdToken,
+  sendPasswordReset,
+} from '../services/authService.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
+import { sendTokenToBackend } from '../services/userService.js';
+
+
 
 const AuthModal = ({ onClose, mode = 'login' }) => {
   const [isLogin, setIsLogin] = useState(mode === 'login');
@@ -20,9 +25,8 @@ const AuthModal = ({ onClose, mode = 'login' }) => {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [resetMode, setResetMode] = useState(false);
+  const { setUserProfile, setIsSigningUp } = useAuth();
 
-  const navigate = useNavigate();
-  const googleProvider = new GoogleAuthProvider();
 
   useEffect(() => {
     setIsLogin(mode === 'login');
@@ -45,70 +49,104 @@ const AuthModal = ({ onClose, mode = 'login' }) => {
     if (!validateForm()) return;
     setLoading(true);
     setError('');
+    setSuccessMsg('');
+  
     try {
+      let result;
       if (resetMode) {
-        await sendPasswordResetEmail(auth, email);
+        result = await sendPasswordReset(email);
+        if (!result.success) {
+          setError(result.error);
+          return;
+        }
         setSuccessMsg('Password reset email sent!');
         setResetMode(false);
+        setLoading(false);
+        return;
       } else if (isLogin) {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const idToken = await userCredential.user.getIdToken();
-        await sendTokenToBackend(idToken);
-        navigate('/dashboard');
+        result = await signInWithEmail(email, password);
       } else {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const idToken = await userCredential.user.getIdToken();
-        await sendTokenToBackend(idToken, { name });
-        navigate('/welcome');
+        setIsSigningUp(true); // Set the flag to true during sign-up
+        result = await createAccount(email, password);
+      }
+  
+      if (!result.success) {
+        setError(result.error);
+        return;
+      } else {
+        const tokenResp = await getIdToken();
+        if (!tokenResp.success) throw new Error("Token fetch failed");
+        
+        //!! ------- Debugging ------
+        console.log("📍------------📍------------📍-----------📍");
+        console.log("📍 Auth Result:", result);
+        console.log("📍 Token:", tokenResp.token);
+
+        //!! ------- Debugging ------
+        const token = tokenResp.token;
+        try {
+          const profile = await sendTokenToBackend(token, {
+            isLogin,
+            additionalData: !isLogin ? { name } : {},
+          });
+        
+          // setUserProfile(profile); // ✅ Only if successful
+          // console.log("✅ Profile received from backend:", profile);
+          console.log("📍------------📍------------📍-----------📍");
+          onClose();
+        } catch (err) {
+          console.error("Auth error:", err.message);
+          setError(err.message); // show in your UI
+        }
       }
     } catch (err) {
-      console.error('Auth error:', err);
-      setError(getReadableErrorMessage(err.code));
+      setError(err.message || "Something went wrong.");
     } finally {
       setLoading(false);
+      setIsSigningUp(false); // Reset the flag after sign-up
     }
   };
+  
 
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const idToken = await result.user.getIdToken();
-      await sendTokenToBackend(idToken);
-      navigate('/dashboard');
-    } catch (err) {
-      console.error('Google sign-in error:', err);
-      setError(getReadableErrorMessage(err.code));
-    } finally {
-      setLoading(false);
+const handleGoogleSignIn = async () => {
+  setLoading(true);
+  setError('');
+  try {
+    // Sign in with Google
+    const result = await signInWithGoogle();
+    if (!result.success) {
+      setError(result.error);
+      return;
     }
-  };
+    
+    // Get the ID token
+    const tokenResp = await getIdToken();
+    if (!tokenResp.success) throw new Error("Token fetch failed");
 
-  const sendTokenToBackend = async (token, additionalData = {}) => {
-    const response = await fetch('YOUR_BACKEND_API_URL/auth', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(additionalData)
+    // Check if the user is new
+    const isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
+
+    console.log("📍📍📍📍📍📍📍📍###########📍📍📍📍📍");
+    console.log("📍 Google Sign-In Result:", result);
+    console.log("📍 Is New User:", isNewUser);
+
+    console.log("📍📍📍📍📍📍📍📍###########📍📍📍📍📍");
+
+    // Send token to backend with name only if the user is new
+    const profile = await sendTokenToBackend(tokenResp.token, {
+      isLogin: !isNewUser, // If not new, treat as login
+      additionalData: isNewUser ? { name: result.user.displayName } : {}, // Send name only for new users
     });
-    if (!response.ok) throw new Error('Failed to authenticate with server');
-    return await response.json();
-  };
 
-  const getReadableErrorMessage = (errorCode) => {
-    const messages = {
-      'auth/user-not-found': 'No account found with this email',
-      'auth/wrong-password': 'Incorrect password',
-      'auth/email-already-in-use': 'Email already in use',
-      'auth/weak-password': 'Password is too weak',
-      'auth/invalid-email': 'Invalid email format',
-      'auth/too-many-requests': 'Too many attempts, try again later'
-    };
-    return messages[errorCode] || 'An unexpected error occurred';
-  };
+    onClose(); // Close the modal
+  } catch (err) {
+    console.error('Google sign-in error:', err);
+    setError(err.message || 'An unexpected error occurred.');
+  } finally {
+    setLoading(false);
+  }
+};
+  
 
   const toggleAuthMode = () => {
     setIsLogin(!isLogin);
