@@ -8,8 +8,10 @@ import {
   import { Link } from "react-router-dom";
   import "../styles/PlaceList.css";
   
-  const getPhotoUrl = (photoRef) => `https://places.googleapis.com/v1/${photoRef.name}/media?maxWidthPx=400&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`;
+  // const getPhotoUrl = (photoRef) => `https://places.googleapis.com/v1/${photoRef.name}/media?maxWidthPx=400&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`;
   
+  const getPhotoUrl = (photo) =>
+    `https://places.googleapis.com/v1/${photo.name}/media?maxWidthPx=400&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`;
   
   const extractLocation = (formattedAddress) => {
     if (!formattedAddress) return "Location unavailable";
@@ -112,9 +114,12 @@ import {
       <div className="featured-grid">
         {places.map((place, index) => {
           const priceSymbols = place.priceLevel ? "$".repeat(place.priceLevel) : "$$";
-          const isOpen = place.currentOpeningHours?.openNow;
+          // if index is 0, 3 mark as open 
+          let isOpen = place.currentOpeningHours?.openNow;
           // TODO: replace with actual image url later | this is good for testing | cost effective
-          // const imageUrl = place.photos?.[0]?.photoReference ? getPhotoUrl(place.photos[0]) : null;
+          // const imageUrl = place.photos?.[0]?.name
+          // ? getPhotoUrl(place.photos[0])
+          // : 'https://placehold.co/400x200?text=Halal+Restaurant&font=roboto';
           const imageUrl = 'https://placehold.co/400x200?text=Halal+Restaurant&font=roboto';
 
           const distance = userLocation && place.location ? calculateDistanceMiles(userLocation.lat, userLocation.lng, place.location.latitude, place.location.longitude) : null;

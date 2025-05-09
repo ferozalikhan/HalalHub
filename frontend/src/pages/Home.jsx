@@ -7,8 +7,8 @@ import "../styles/Home.css";
 import "../App.css";
 import { FaFilter, FaTimes, FaStar, FaUtensils, FaTruck, FaStore } from 'react-icons/fa';
 import PlaceList from "../components/PlaceList.jsx";
-import axios from "axios";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
+import AuthModal from '../components/AuthModal.jsx';
 
 
 export default function Home(
@@ -39,6 +39,11 @@ export default function Home(
   const hasDraggedRef = useRef(false);
   const hasInteractedRef = useRef(false);        // avoid first idle event
   const isDraggingAllowedRef = useRef(true);     // only true after nearby/text
+
+
+const [showAuthModal, setShowAuthModal] = useState(false);
+const [authMode, setAuthMode] = useState('login'); // 'login' | 'signup'
+
  
 
   const toggleSidebar = () => {
@@ -59,6 +64,14 @@ export default function Home(
         isDraggingAllowedRef={isDraggingAllowedRef}
         selectedCategories={selectedCategories}
         setSelectedCategories={setSelectedCategories}
+        onLoginClick={() => {
+          setAuthMode('login');
+          setShowAuthModal(true);
+        }}
+        onSignupClick={() => {
+          setAuthMode('signup');
+          setShowAuthModal(true);
+        }}
       />
 
 
@@ -73,13 +86,7 @@ export default function Home(
         />
         
          <div className={`map-section ${sidebarOpen ? 'with-sidebar' : ''}`}>
-                    <div className="map-header">
-                        <div>
-                            <h1>Discover Halal Food Near You</h1>
-                            {/* <p className="subtitle">Find the best halal options in your neighborhood</p> */}
-                        </div>
-                        
-                    </div>                    
+                                      
                     <div className="map-container">
                         <MapComponent 
                         userLocation={userLocation}
@@ -127,8 +134,17 @@ export default function Home(
                         </div>
                         )}
                     </section>
+
                 </div>
-        
+                {/* Auth Modal */}
+                {showAuthModal && (
+                  <div className="auth-modal-backdrop">
+                    <AuthModal 
+                      mode={authMode}
+                      onClose={() => setShowAuthModal(false)}
+                    />
+                  </div>
+                )}
       </main>
     </div>
   );

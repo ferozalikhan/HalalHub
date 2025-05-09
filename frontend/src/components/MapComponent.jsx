@@ -10,6 +10,7 @@ import {
 import { debounce } from "lodash";
 import { CodeSquare } from "lucide-react";
 import { getZoomForModeOrDistance } from "../utils/modeZoomMap";
+import {getCategoryStyle, getPlaceTypeInfo} from "../utils/placeCategoryUtils";
 
 
 
@@ -120,79 +121,7 @@ export default function MapComponent({
     const listener = map.addListener("idle", () => handleIdleRef.current?.());
     return () => listener.remove();
   }, [map, mapState.lastSearchBounds]);
-  
 
-  // useEffect(() => {
-    
-  //   console.log("🚩------------------ HandleIdle UseEffect -----------------🚩");
-  //   if (!map) return;  
-  //   const handleIdle = debounce(() => {
-  //     const center = map.getCenter();
-  //     const zoom = map.getZoom();
-  
-  //     if (zoom < 12) {
-  //       // pop up a message to the user
-  //       // TODO: use a modal or toast
-  //       console.log("🔍 Zoom in to see more details.");
-  //       return;
-  //     }
-
-  //     if (!hasInteractedRef.current) {
-  //       hasInteractedRef.current = true; // First interaction after mode change
-  //       return;
-  //     }
-      
-  //     if (!isDraggingAllowedRef.current) {
-  //       console.log("🚫 Drag ignored — user interaction not allowed (e.g., after text search)");
-  //       return;
-  //     }
-      
-  //     const centerLatLng = {
-  //       lat: center.lat(),
-  //       lng: center.lng()
-  //     };
-  //     // TODO: Polish up the isInsidePreviouslyFetchedArea function to better handle the case
-  //     if (!isInsidePreviouslyFetchedArea(centerLatLng, mapState.lastSearchBounds)) {
-  //       if (userDidManualDragRef.current) {
-  //         reverseGeocode(centerLatLng.lat, centerLatLng.lng, "drag");
-  //         userDidManualDragRef.current = false; // reset
-  //       } else {
-  //         console.log("👋 Idle but not a manual drag — skipping reverseGeocode");
-  //       }
-
-        
-  //       const bounds = map.getBounds();
-  //       const ne = bounds.getNorthEast();
-  //       const sw = bounds.getSouthWest();
-
-  //       const newBounds = {
-  //         north: ne.lat(),
-  //         south: sw.lat(),
-  //         east: ne.lng(),
-  //         west: sw.lng(),
-  //       };
-
-  //       setMapState(prev => ({
-  //         ...prev,
-  //         center: centerLatLng,
-  //         zoom,
-  //         lastSearchBounds: newBounds,
-  //       }));
-
-  //       console.log("🚩------------------ ........... -----------------🚩");
-  //       console.log("");
-  //     }
-  //     else {
-  //       console.log("Already searched this area — skipping fetch.");
-  //       console.log("🚩------------------ ........... -----------------🚩");
-  //       console.log("");
-  //     }
-  //   }, 600);
-  
-  //   const listener = map.addListener("idle", handleIdle);
-  //   return () => listener.remove();
-  // }, [map, mapState.lastSearchBounds]);
-  
   
   const MapHandler = ({ place, marker }) => {
 
@@ -321,7 +250,6 @@ export default function MapComponent({
   
     fetchLocation();
   }, []);
-  
 
   return (
     <div className="map-container">
@@ -345,33 +273,54 @@ export default function MapComponent({
                 lng: selectedPlace.longitude,
               }}
             >
-              <Pin background="#4285F4" glyphColor="#FFFFFF" borderColor="#1A73E8" />
+              {/* <Pin background="#4285F4" glyphColor="#FFFFFF" borderColor="#1A73E8" /> */}
+              <Pin 
+                background="#34A853"
+                glyph="👤"
+                glyphColor="#FFFFFF"
+                borderColor="#0F9D58"
+              />
             </AdvancedMarker>
 
             {/* All Fetched Halal Places */}
             {places.map((place, idx) => {
-              const lat = place.location?.latitude;
-              const lng = place.location?.longitude;
-              const name = place.displayName?.text || "Unnamed";
+            const lat = place.location?.latitude;
+            const lng = place.location?.longitude;
+            const name = place.displayName?.text || "Unnamed";
 
-              if (!lat || !lng) return null;
+            if (!lat || !lng) return null;
 
-              return (
-                <AdvancedMarker
-                  key={idx}
-                  position={{ lat, lng }}
-                  title={name}
-                  onClick={() => setSelectedPlace({
+            // 🧠 Step 1: Get inferred category info
+            const { label, glyph } = getPlaceTypeInfo(place.primaryType, place.types);
+
+            const category = (label || "other").toLowerCase();
+            const { background, borderColor, glyph: fallbackGlyph } = getCategoryStyle(category);
+
+
+            return (
+              <AdvancedMarker
+                key={idx}
+                position={{ lat, lng }}
+                title={name}
+                onClick={() =>
+                  setSelectedPlace({
                     name,
                     formattedAddress: place.formattedAddress,
                     latitude: lat,
-                    longitude: lng
-                  })}
-                >
-                  <Pin background="#34a853" glyphColor="#ffffff" borderColor="#0c8040" />
-                </AdvancedMarker>
-              );
-            })}
+                    longitude: lng,
+                  })
+                }
+              >
+                <Pin
+                  background={background}
+                  glyphColor="#ffffff"
+                  borderColor={borderColor}
+                  glyph={glyph || fallbackGlyph} // use inferred or fallback glyph
+                />
+              </AdvancedMarker>
+            );
+          })}
+
           </Map>
         ) : (
           <p>Loading map...</p>

@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import categoryMap from '../../constants/categoryMap'; // Adjust import as needed
+import categoryMap from '../constants/categoryMap'; // Adjust import as needed
 import { calculateDistanceMiles } from '../utils/distance';
-import { map } from 'lodash';
+
 
 
 // Helper: Check if place matches selected categories
@@ -30,27 +30,6 @@ function mapPriceLevel(apiValue) {
 }
 
 function applyFrontendFilters(places, filters, searchMode, userLocation) {
-  // return places.filter(place => {
-  //   const placePrice = mapPriceLevel(place.priceLevel);
-  //   const placeRating = place.rating || 0;
-  //   const openNow = place.currentOpeningHours?.openNow;
-  //   const delivery = place.delivery;
-  //   const dineIn = place.dineIn;
-
-  //   const matchesPrice = !filters.price.length || filters.price.includes(placePrice);
-  //   const matchesRating = !filters.rating || placeRating >= filters.rating;
-  //   const matchesOpenNow = !filters.features.includes("open-now") || openNow;
-  //   const matchesDelivery = !filters.features.includes("delivery") || delivery;
-  //   const matchesDineIn = !filters.features.includes("dine-in") || dineIn;
-
-  //   return (
-  //     matchesPrice &&
-  //     matchesRating &&
-  //     matchesOpenNow &&
-  //     matchesDelivery &&
-  //     matchesDineIn
-  //   );
-  // });
 
   // !! Debugging: Log the filters being applied
   console.log("📌------------ inside applyFrontendFilters ---------📌");
@@ -64,9 +43,8 @@ function applyFrontendFilters(places, filters, searchMode, userLocation) {
   
     // // !! Debugging: Log the place being filtered
     console.log("🚩 Filtering Place:", place.displayName.text);
-    console.log("🚩 Place Primary Type:", place.primaryType);
-    console.log("🚩 Place opening Hours:", place.currentOpeningHours);
-    console.log("🚩 Place regular Hours:", place.regularOpeningHours);
+    // print the places iamges 
+    console.log("🚩 Place images:", place.photos);
     // console.log("🚩 Place Price:", placePrice);
     // console.log("🚩 Place Rating:", placeRating);
     // console.log("🚩 Open Now:", openNow);
@@ -232,25 +210,6 @@ useEffect(() => {
   prevDistanceRef.current = distanceFilter;
 }, [distanceFilter, searchMode]);
 
-
-  
-
-  // // useEffect for selected Filters
-  // useEffect(() => {
-  
-
-  //   console.log("📌------------ selectedFilters ---------📌");
-  //   console.log("🚩 Selected Filters:", selectedFilters);
-  //   // print the length of all fetched places
-  //   console.log("🚩 All Fetched Places:", rawPlaces.length);
-  //   if(!selectedFilters) return;
-
-  //   const filtered = applyFrontendFilters(rawPlaces, selectedFilters, searchMode, userLocation);
-  //   filteredPlaces(filtered);
-    
-  //   console.log("📌------------------ 📌 -----------------📌");
-    
-  // }, [selectedFilters, rawPlaces]);
 
   return {
     places: filteredPlaces,

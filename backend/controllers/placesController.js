@@ -1,7 +1,9 @@
-const axios = require("axios");
-const { fieldMask, categoryMap } = require("../constants/googleFieldMask");
+// const axios = require("axios")
+import axios from "axios"; // Import axios for HTTP requests
+// const { fieldMask, categoryMap } = require("../constants/googleFieldMask");
+import { fieldMask, categoryMap } from "../constants/googleFieldMask.js";
 
-exports.searchPlacesController = async (req, res) => {
+export async function searchPlacesController(req, res)  {
   const { mode = "text", query, lat, lng, category = [], pageToken, bounds  } = req.query;
   console.log("📦-------------------📦--------------------📦");
   console.group("📦 Original Request Params");

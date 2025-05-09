@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import Home from './pages/Home'
+import { AuthProvider } from "./contexts/AuthContext";
 import { APIProvider } from '@vis.gl/react-google-maps'
 import './App.css'
 // routes
 import { Routes, Route } from 'react-router-dom'
-import axios from 'axios'
 import { useEffect } from 'react'
 import PlaceDetail from './pages/PlaceDetail'
 import usePlacesSearch from './hooks/usePlaceSearch'
@@ -31,10 +31,10 @@ function App() {
         distance: 5,
       });
   const [mapState, setMapState] = useState({
-  zoom: 14,
-  center: null,
-  lastSearchBounds: null
-  });
+        zoom: 14,
+        center: null,
+        lastSearchBounds: null
+        });
   const {
     places,
     loading,
@@ -53,57 +53,9 @@ function App() {
   }, [hasMore]);
   
 
-  // load more results 
-  // const [nextPageToken, setNextPageToken] = useState(null);
-  // const [loading, setLoading] = useState(true);
-
-  // 🔁 Fetch places when selectedPlace or mode changes
-  // useEffect(() => {
-  //   const fetchPlaces = async () => {
-  //     if (!selectedPlace?.latitude || !selectedPlace?.longitude) return;
-
-  //     try {
-  //       setLoading(true);
-
-  //       const params = {
-  //         mode: searchMode,
-  //         lat: selectedPlace.latitude,
-  //         lng: selectedPlace.longitude,
-  //         category,
-  //         ...(nextPageToken && { pageToken: nextPageToken })
-  //       };
-
-  //       // Add query if searchMode is text (e.g. city search)
-  //       if (searchMode === "text") {
-  //         params.query = selectedPlace.name || selectedPlace.formattedAddress || "";
-  //       }
-
-  //       const response = await axios.get("http://localhost:3000/api/places/search", {
-  //         params,
-  //       });
-
-  //       console.log("✅ Places fetched:", response.data);
-  //       const fetchedPlaces = response.data.places || [];
-  //       // Update places state with new data
-  //       setPlaces((prev) => nextPageToken ? [...prev, ...fetchedPlaces] : fetchedPlaces);
-  //       setNextPageToken(response.data.nextPageToken || null);
-
-  //     } catch (err) {
-  //       console.error("❌ Error fetching places:", err.response?.data || err.message);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchPlaces();
-  // }, [selectedPlace, searchMode, category]);
-
   return (
   
-      // <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-      //   <Home />
-      // </APIProvider>
-
+    <AuthProvider>
       <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
         <Routes>
           <Route path="/" element={
@@ -131,10 +83,12 @@ function App() {
           {selectedPlace?.latitude && selectedPlace?.longitude && (
             <Route path="/place/:id" element={<PlaceDetail places={places} userLocation={userLocation}/>} />
           )}
+
           
           {/* Add more routes here */}
         </Routes>
       </APIProvider>
+    </AuthProvider>
 
 
   )
