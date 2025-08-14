@@ -3,7 +3,8 @@
 **Halal Hub** is a full-stack web application that helps users discover verified halal restaurants, food trucks, and grocery stores near them using real-time geolocation, advanced map search modes, and Google Places data. Designed with a user-first approach, Halal Hub supports multiple discovery modes (nearby, drag, and text search), personalized features, and halal verification tools.
 
 ---
-
+📄 **[View Full Project Documentation (PDF)](Halal_Hub_Poster.pptx.pdf)**
+---
 ## 🚀 Features
 
 - 🔍 **Search Modes**
