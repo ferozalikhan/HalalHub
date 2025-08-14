@@ -1,5 +1,3 @@
-# 🕌 Halal Hub
-
 ---
 ![Halal Hub Documentation Preview](Halal_Hub_Poster.png)
 
